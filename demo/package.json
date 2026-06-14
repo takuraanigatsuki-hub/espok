@@ -1,0 +1,9 @@
+{
+  "name": "epsok-demo",
+  "private": true,
+  "description": "Демонстрационный прототип ЕПСОК",
+  "scripts": {
+    "start": "npx serve public -p 3000 -c serve.json",
+    "demo": "npx serve public -p 3000 -c serve.json"
+  }
+}

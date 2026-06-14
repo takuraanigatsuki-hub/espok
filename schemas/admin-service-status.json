@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-service-status.json",
+  "title": "AdminServiceStatus",
+  "description": "Снимок состояния микросервиса (SVC)",
+  "type": "object",
+  "required": ["serviceId", "status", "checkedAt"],
+  "properties": {
+    "serviceId": { "type": "string", "examples": ["case-management", "osint-orchestrator"] },
+    "displayName": { "type": "string" },
+    "status": { "type": "string", "enum": ["healthy", "degraded", "down", "maintenance"] },
+    "version": { "type": "string" },
+    "replicas": {
+      "type": "object",
+      "properties": {
+        "desired": { "type": "integer" },
+        "ready": { "type": "integer" }
+      }
+    },
+    "latencyP99Ms": { "type": "number" },
+    "errorRatePercent": { "type": "number" },
+    "uptimePercent30d": { "type": "number" },
+    "lastIncidentAt": { "type": "string", "format": "date-time" },
+    "checkedAt": { "type": "string", "format": "date-time" }
+  }
+}

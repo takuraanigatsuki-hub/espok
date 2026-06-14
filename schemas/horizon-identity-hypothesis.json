@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-identity-hypothesis.json",
+  "title": "IdentityHypothesis",
+  "description": "FIR — гипотеза совпадения личности без центральной базы ФИО",
+  "type": "object",
+  "required": ["id", "caseId", "hashFio", "confidence", "matchSignals", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "localPersonNodeId": { "type": "string" },
+    "hashFio": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "birthYear": { "type": "integer" },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "matchSignals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["hash_fio", "birth_year", "document_hash", "giac_person_id", "serendipity_phone", "serendipity_iban"]
+      }
+    },
+    "peerCaseId": { "type": "string", "format": "uuid" },
+    "giacPersonId": { "type": "string", "description": "Только после исполненного запроса ГИАЦ" },
+    "reviewStatus": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "rejected"]
+    },
+    "confirmationMethod": {
+      "type": "string",
+      "enum": ["giac_requery", "interrogation", "expert", "other"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

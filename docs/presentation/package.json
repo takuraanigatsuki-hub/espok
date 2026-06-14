@@ -1,0 +1,15 @@
+{
+  "name": "epsok-presentation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:pptx": "node build-presentation.mjs",
+    "build:video-html": "node -e \"console.log('Video HTML: open epsok-video/index.html')\"",
+    "record:video": "node record-video.mjs",
+    "build:all": "npm run build:pptx && npm run record:video"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0",
+    "pptxgenjs": "^3.12.0"
+  }
+}

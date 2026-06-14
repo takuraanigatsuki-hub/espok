@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/osint-finding.json",
+  "title": "OsintFinding",
+  "description": "Нормализованная OSINT-находка после маппинга из SpiderFoot",
+  "type": "object",
+  "required": [
+    "id",
+    "scanId",
+    "caseId",
+    "eventType",
+    "normalizedType",
+    "valueHash",
+    "confidence",
+    "sourceModule",
+    "importedToGraph",
+    "createdAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "scanId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "description": "Исходный тип события SpiderFoot",
+      "examples": ["HUMAN_NAME", "EMAILADDR", "SOCIAL_MEDIA"]
+    },
+    "normalizedType": {
+      "type": "string",
+      "enum": [
+        "person_name",
+        "email",
+        "email_generic",
+        "phone",
+        "username",
+        "social_profile",
+        "external_account",
+        "location",
+        "address",
+        "domain",
+        "ip",
+        "birth_date",
+        "employment_hint",
+        "breach_indicator",
+        "leak_reference",
+        "raw_enrichment"
+      ]
+    },
+    "value": {
+      "type": "string",
+      "description": "Расшифрованное значение; доступно только при наличии прав на дело",
+      "maxLength": 4096
+    },
+    "valueHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "sourceModule": {
+      "type": "string",
+      "pattern": "^sfp_[a-z0-9_]+$",
+      "examples": ["sfp_gravatar", "sfp_accounts"]
+    },
+    "sourceUrl": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048
+    },
+    "sourceEventHash": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "graphNodeId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "evidenceItemId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "importedToGraph": {
+      "type": "boolean"
+    },
+    "requiresReview": {
+      "type": "boolean",
+      "description": "Требует ручного подтверждения перед импортом в граф"
+    },
+    "reviewStatus": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

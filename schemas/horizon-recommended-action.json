@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-recommended-action.json",
+  "title": "RecommendedAction",
+  "description": "PRO — рекомендуемый следующий легальный шаг",
+  "type": "object",
+  "required": ["id", "caseId", "rank", "requestType", "targetAgency", "expectedYield", "legalBasisTemplate", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "rank": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "requestType": { "type": "string" },
+    "targetAgency": { "type": "string", "enum": ["MVD", "SK", "FNS", "RFM", "FTS", "FSB", "OTHER"] },
+    "expectedYield": {
+      "type": "object",
+      "properties": {
+        "nodes": { "type": "integer" },
+        "confidence": { "type": "integer" }
+      }
+    },
+    "slaEstimateHours": { "type": "number" },
+    "deadlineRiskDays": { "type": "integer" },
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "legalBasisTemplate": { "type": "string" },
+    "rationale": { "type": "string" },
+    "sourceModules": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["GLD", "MORM", "IDT", "TCR", "SE"] }
+    },
+    "accepted": { "type": "boolean", "default": false },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

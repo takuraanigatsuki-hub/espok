@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-serendipity-alert.json",
+  "title": "SerendipityAlert",
+  "description": "SE — федеральное совпадение hash между делами",
+  "type": "object",
+  "required": ["id", "caseId", "peerCaseId", "matchedHashType", "tokenHash", "confidence", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "peerCaseId": { "type": "string", "format": "uuid" },
+    "peerRegion": { "type": "string" },
+    "peerArticle": { "type": "string" },
+    "matchedHashType": {
+      "type": "string",
+      "enum": ["phone", "iban", "imei", "imsi", "wallet", "hashFio", "plate", "inn", "email_hash"]
+    },
+    "tokenHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "revealStatus": {
+      "type": "string",
+      "enum": ["pending", "approved", "denied"]
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

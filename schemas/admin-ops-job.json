@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-ops-job.json",
+  "title": "AdminOpsJob",
+  "description": "Операционная задача (OPS)",
+  "type": "object",
+  "required": ["id", "jobType", "status", "scheduledAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "jobType": {
+      "type": "string",
+      "enum": ["osint_purge", "horizon_ttl_purge", "vault_key_rotate", "audit_archive", "bloom_rebuild"]
+    },
+    "status": { "type": "string", "enum": ["scheduled", "running", "completed", "failed", "cancelled"] },
+    "dryRun": { "type": "boolean", "default": true },
+    "parameters": { "type": "object" },
+    "recordsAffected": { "type": "integer" },
+    "scheduledAt": { "type": "string", "format": "date-time" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": "string", "format": "date-time" },
+    "requestedBy": { "type": "string", "format": "uuid" },
+    "approvedBy": { "type": "string", "format": "uuid" },
+    "errorMessage": { "type": "string" }
+  }
+}

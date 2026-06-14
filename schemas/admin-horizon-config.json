@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-horizon-config.json",
+  "title": "AdminHorizonConfig",
+  "description": "Конфигурация модулей Horizon (HZM)",
+  "type": "object",
+  "required": ["modules", "bloomIndexStatus", "updatedAt"],
+  "properties": {
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["moduleId", "enabled"],
+        "properties": {
+          "moduleId": { "type": "string", "enum": ["SE", "GLD", "TCR", "MORM", "IDT", "PRO", "FIR"] },
+          "enabled": { "type": "boolean" },
+          "maxDepth": { "type": "integer", "description": "GLD bounded search depth" },
+          "federatedRevealEnabled": { "type": "boolean", "description": "SE/FIR cross-case" }
+        }
+      }
+    },
+    "bloomIndexStatus": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["healthy", "rebuilding", "degraded"] },
+        "entryCount": { "type": "integer" },
+        "lastRebuildAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "updatedBy": { "type": "string", "format": "uuid" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

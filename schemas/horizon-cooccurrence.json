@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-cooccurrence.json",
+  "title": "CooccurrenceEvent",
+  "description": "TCR — временное пересечение сущностей (легальные источники)",
+  "type": "object",
+  "required": ["id", "caseId", "occurredAt", "entityARef", "entityBRef", "sourceType", "legalRef"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "entityARef": { "type": "string" },
+    "entityBRef": { "type": "string" },
+    "sourceType": {
+      "type": "string",
+      "enum": ["CDR", "RFM", "FTS", "SAFE_CITY", "OSINT", "SERENDIPITY", "INTERAGENCY"]
+    },
+    "legalRef": { "type": "string", "description": "Постановление / номер исполненного запроса" },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "interagencyRequestId": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

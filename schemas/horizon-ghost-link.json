@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-ghost-link.json",
+  "title": "GhostLinkHypothesis",
+  "description": "GLD — скрытый путь в графе через промежуточные узлы",
+  "type": "object",
+  "required": ["id", "caseId", "path", "confidence", "recommendedRequestType", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "sourceNodeId": { "type": "string" },
+    "targetNodeId": { "type": "string" },
+    "path": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["nodeId", "nodeType", "label"],
+        "properties": {
+          "nodeId": { "type": "string" },
+          "nodeType": { "type": "string" },
+          "label": { "type": "string" },
+          "edgeType": { "type": "string" }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 6
+    },
+    "pathLength": { "type": "integer" },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "recommendedRequestType": { "type": "string", "examples": ["FNS_EGRUL", "RFM_TRANSACTIONS"] },
+    "recommendedAgency": { "type": "string", "enum": ["MVD", "SK", "FNS", "RFM", "FTS", "FSB"] },
+    "confirmed": { "type": "boolean", "default": false },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

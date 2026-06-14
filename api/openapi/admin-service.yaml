@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: ЕПСОК Tech Admin API
+  description: |
+    API консоли технического администратора.
+    Реестр: configs/tech-admin-capabilities.yaml · RBAC: TECH_ADMIN, POL-008…014
+    **Запрещён доступ к содержимому дел.**
+  version: 1.0.0
+
+servers:
+  - url: https://admin-api.epsok.gov.ru/v1
+
+security:
+  - bearerAuth: []
+  - mtls: []
+  - hardwareToken: []
+
+tags:
+  - name: SVC
+    description: Service Health Monitor
+  - name: USR
+    description: User & Role Provisioning
+  - name: INT
+    description: Integration & SMEV Admin
+  - name: CFG
+    description: Feature Flags & Regional Config
+  - name: OSW
+    description: OSINT Worker Pool Admin
+  - name: HZM
+    description: Horizon Platform Admin
+  - name: OPS
+    description: Operations & Retention
+
+paths:
+  /admin/services:
+    get:
+      tags: [SVC]
+      summary: Статус микросервисов
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceStatus'
+
+  /admin/services/{serviceId}/metrics:
+    get:
+      tags: [SVC]
+      summary: Метрики сервиса (Prometheus proxy)
+      parameters:
+        - name: serviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Aggregated metrics
+
+  /admin/users:
+    get:
+      tags: [USR]
+      summary: Список заявок на provisioning (метаданные)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProvision'
+    post:
+      tags: [USR]
+      summary: Создать заявку на УЗ / роли (POL-009)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProvisionCreate'
+      responses:
+        '201':
+          description: Заявка создана (pending_approval)
+
+  /admin/users/{provisionId}/approve:
+    post:
+      tags: [USR]
+      summary: Согласование ADMIN
+      parameters:
+        - name: provisionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Approved
+
+  /admin/integrations:
+    get:
+      tags: [INT]
+      summary: Статус адаптеров СМЭВ и ведомств
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IntegrationAdapter'
+
+  /admin/integrations/{adapterId}/certificates/rotate:
+    post:
+      tags: [INT]
+      summary: Ротация mTLS-сертификата (POL-012)
+      parameters:
+        - name: adapterId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Rotation scheduled
+
+  /admin/feature-flags:
+    get:
+      tags: [CFG]
+      summary: Feature flags
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureFlag'
+    patch:
+      tags: [CFG]
+      summary: Обновить flag (POL-014)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlag'
+      responses:
+        '200':
+          description: Updated
+
+  /admin/osint/config:
+    get:
+      tags: [OSW]
+      summary: Конфиг OSINT Worker Pool
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintConfig'
+    put:
+      tags: [OSW]
+      summary: Обновить whitelist / replicas (POL-010, dual control)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsintConfig'
+      responses:
+        '202':
+          description: Pending second approval
+
+  /admin/horizon/modules:
+    get:
+      tags: [HZM]
+      summary: Конфиг модулей Horizon
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HorizonConfig'
+    patch:
+      tags: [HZM]
+      summary: Вкл/выкл модуль (POL-011)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moduleId:
+                  type: string
+                  enum: [SE, GLD, TCR, MORM, IDT, PRO, FIR]
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated
+
+  /admin/horizon/bloom/rebuild:
+    post:
+      tags: [HZM]
+      summary: Запуск пересборки Bloom-индекса
+      responses:
+        '202':
+          description: Rebuild scheduled
+
+  /admin/ops/jobs:
+    get:
+      tags: [OPS]
+      summary: Список ops jobs
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpsJob'
+    post:
+      tags: [OPS]
+      summary: Запланировать job (POL-013)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpsJobCreate'
+      responses:
+        '202':
+          description: Scheduled
+
+  /admin/ops/maintenance-windows:
+    get:
+      tags: [OPS]
+      summary: Окна обслуживания
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceWindow'
+    post:
+      tags: [OPS]
+      summary: Создать окно обслуживания
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceWindow'
+      responses:
+        '201':
+          description: Created
+
+  /admin/audit/config:
+    get:
+      summary: Журнал изменений конфигурации (WORM)
+      responses:
+        '200':
+          description: Append-only audit entries
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    mtls:
+      type: mutualTLS
+    hardwareToken:
+      type: apiKey
+      in: header
+      name: X-Hardware-Token
+
+  schemas:
+    ServiceStatus:
+      $ref: '../../schemas/admin-service-status.json'
+    UserProvision:
+      $ref: '../../schemas/admin-user-provision.json'
+    UserProvisionCreate:
+      type: object
+      required: [action, targetLogin, requestedRoles, justification]
+      properties:
+        action:
+          type: string
+        targetLogin:
+          type: string
+        requestedRoles:
+          type: array
+          items:
+            type: string
+        justification:
+          type: string
+    IntegrationAdapter:
+      $ref: '../../schemas/admin-integration-adapter.json'
+    FeatureFlag:
+      $ref: '../../schemas/admin-feature-flag.json'
+    OsintConfig:
+      $ref: '../../schemas/admin-osint-config.json'
+    HorizonConfig:
+      $ref: '../../schemas/admin-horizon-config.json'
+    OpsJob:
+      $ref: '../../schemas/admin-ops-job.json'
+    OpsJobCreate:
+      type: object
+      required: [jobType, dryRun]
+      properties:
+        jobType:
+          type: string
+        dryRun:
+          type: boolean
+        parameters:
+          type: object
+    MaintenanceWindow:
+      $ref: '../../schemas/admin-maintenance-window.json'

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-feature-flag.json",
+  "title": "AdminFeatureFlag",
+  "description": "Feature flag по региону/контуру (CFG)",
+  "type": "object",
+  "required": ["flagKey", "enabled", "scope"],
+  "properties": {
+    "flagKey": { "type": "string", "examples": ["osint.enabled", "horizon.se.enabled", "graph.community_detection"] },
+    "displayName": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["global", "region", "pilot", "agency"] },
+        "values": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "rateLimitOverride": {
+      "type": "object",
+      "properties": {
+        "requestsPerMinute": { "type": "integer" },
+        "osintScansPerDay": { "type": "integer" }
+      }
+    },
+    "updatedBy": { "type": "string", "format": "uuid" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}
