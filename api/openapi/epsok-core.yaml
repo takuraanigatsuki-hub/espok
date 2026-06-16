@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: ЕПСОК Core API
+  description: |
+    API федеральной платформы следственно-оперативной координации.
+    Все запросы требуют mTLS + Bearer token (ЕСИА).
+  version: 1.0.0
+  contact:
+    name: ЕПСОК — проектная документация
+
+servers:
+  - url: https://api.epsok.gov.ru/v1
+    description: Промышленный контур (проект)
+  - url: https://pilot-api.epsok.gov.ru/v1
+    description: Пилотный контур
+
+security:
+  - bearerAuth: []
+  - mtls: []
+
+tags:
+  - name: cases
+    description: Карточки расследований
+  - name: requests
+    description: Межведомственные запросы
+  - name: graph
+    description: Граф связей
+  - name: evidence
+    description: Реестр доказательств
+  - name: deadlines
+    description: Процессуальные сроки
+  - name: osint
+    description: OSINT Intelligence (см. osint-service.yaml)
+  - name: admin
+    description: Tech Admin Console (см. admin-service.yaml)
+
+paths:
+  /cases:
+    get:
+      tags: [cases]
+      summary: Список дел пользователя
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvestigationCase'
+                  total:
+                    type: integer
+    post:
+      tags: [cases]
+      summary: Создать карточку расследования
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestigationCaseCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestigationCase'
+
+  /cases/{caseId}:
+    get:
+      tags: [cases]
+      summary: Получить карточку дела
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestigationCase'
+        '403':
+          description: Нет доступа (ABAC)
+
+  /cases/{caseId}/timeline:
+    get:
+      tags: [cases]
+      summary: Хронология событий по делу
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          description: OK
+
+  /cases/{caseId}/requests:
+    post:
+      tags: [requests]
+      summary: Создать межведомственный запрос
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteragencyRequestCreate'
+      responses:
+        '201':
+          description: Created
+
+  /cases/{caseId}/graph:
+    get:
+      tags: [graph]
+      summary: Граф связей по делу
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 2
+            maximum: 5
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Graph'
+
+  /cases/{caseId}/deadlines:
+    get:
+      tags: [deadlines]
+      summary: Процессуальные сроки по делу
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          description: OK
+
+  /cases/{caseId}/evidence:
+    post:
+      tags: [evidence]
+      summary: Зарегистрировать доказательство
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '201':
+          description: Created
+
+  # OSINT Intelligence — полная спецификация: api/openapi/osint-service.yaml
+  /cases/{caseId}/osint/scans:
+    get:
+      tags: [osint]
+      summary: Список OSINT-сканов по делу (см. osint-service.yaml)
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [osint]
+      summary: Запустить OSINT-скан
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '201':
+          description: Created
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mtls:
+      type: mutualTLS
+
+  parameters:
+    caseId:
+      name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    InvestigationCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [registered, initiated, investigating, suspended, transferred, closed]
+        primaryArticle:
+          type: string
+        region:
+          type: string
+        leadAgency:
+          type: string
+          enum: [MVD, SK, FSB, OTHER]
+
+    InvestigationCaseCreate:
+      type: object
+      required: [primaryArticle, region, leadAgency]
+      properties:
+        primaryArticle:
+          type: string
+        region:
+          type: string
+        leadAgency:
+          type: string
+
+    InteragencyRequestCreate:
+      type: object
+      required: [requestType, targetAgency, legalBasis]
+      properties:
+        requestType:
+          type: string
+        targetAgency:
+          type: string
+        legalBasis:
+          type: string
+        requestPayload:
+          type: object
+
+    Graph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              label:
+                type: string
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
+                type: string
+              to:
+                type: string
+              type:
+                type: string

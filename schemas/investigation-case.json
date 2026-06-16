@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/investigation-case.json",
+  "title": "InvestigationCase",
+  "description": "Сквозная карточка расследования ЕПСОК",
+  "type": "object",
+  "required": ["id", "status", "primaryArticle", "region", "leadAgency", "initiatedAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "EPSOK-CASE-{uuid}"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["registered", "initiated", "investigating", "suspended", "transferred", "closed"]
+    },
+    "primaryArticle": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?\\s*УК\\s*РФ",
+      "examples": ["159.3 УК РФ", "228.1 УК РФ"]
+    },
+    "additionalArticles": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "initiatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "region": {
+      "type": "string",
+      "description": "Код субъекта РФ (OKATO/OKTMO)"
+    },
+    "leadAgency": {
+      "type": "string",
+      "enum": ["MVD", "SK", "FSB", "OTHER"]
+    },
+    "leadInvestigatorId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "workingGroup": {
+      "type": "array",
+      "items": { "type": "string", "format": "uuid" }
+    },
+    "externalCaseNumbers": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "examples": [{ "MVD": "2027-123456", "SK": "20270123456789012345" }]
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 10000
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

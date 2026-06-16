@@ -1,0 +1,220 @@
+# Реестр ведомств ЕПСОК: ФЗ, данные, функции платформы
+# Версия: 1.0 — см. docs/technical/agency-functions.md
+
+version: "1.0"
+service: epsok-agency-registry
+
+agencies:
+  - id: MVD
+    name: МВД России
+    role_codes: [INV, INV_LEAD, OPS, EXEC]
+    contour: [investigative, operative]
+    primary_laws:
+      - { id: "3-FZ", title: "О полиции", articles: ["2", "12", "13"] }
+      - { id: "144-FZ", title: "Об ОРД" }
+      - { id: "UPK", articles: ["40", "41", "144", "145", "151", "186"] }
+      - { id: "210-FZ", title: "Об организации деятельности МВД и ФСБ" }
+    systems: [GIAC, IBD, GIBDD, ORD]
+    epsok_modules: [case_management, link_graph, interagency_hub, deadlines, osint, horizon]
+    platform_functions:
+      - { id: MVD-01, name: Проверка по ГИАЦ, request_type: MVD_PERSON_CHECK, roles: [INV, OPS] }
+      - { id: MVD-02, name: Розыск / ИБД, request_type: MVD_WANTED, roles: [INV, OPS] }
+      - { id: MVD-03, name: Транспорт / ГИБДД, request_type: MVD_VEHICLE, roles: [INV] }
+      - { id: MVD-04, name: CDR по постановлению, request_type: MVD_CDR, roles: [INV], legal: "ст. 186 УПК" }
+      - { id: MVD-05, name: КУСП / сообщение о преступлении, module: case_management, roles: [INV] }
+      - { id: MVD-06, name: Передача по подследственности, request_type: SK_SUBORDINATION, roles: [INV_LEAD] }
+      - { id: MVD-07, name: ОРД-контур, module: operative_contour, roles: [OPS], requires: ord_number }
+      - { id: MVD-08, name: Исполнение входящих запросов, roles: [EXEC] }
+
+  - id: SK
+    name: Следственный комитет РФ
+    role_codes: [INV, INV_LEAD, EXEC]
+    contour: [investigative]
+    primary_laws:
+      - { id: "403-FZ", title: "О Следственном комитете", articles: ["1", "2", "3"] }
+      - { id: "UPK", articles: ["37", "41", "151", "152", "195"] }
+      - { id: "73-FZ", title: "О государственной судебно-экспертной деятельности" }
+    systems: [IS_SK, EKC]
+    epsok_modules: [case_management, link_graph, interagency_hub, evidence, deadlines, horizon]
+    platform_functions:
+      - { id: SK-01, name: Связка смежного дела, request_type: SK_CASE_LINK, roles: [INV] }
+      - { id: SK-02, name: Копии материалов, request_type: SK_MATERIALS, roles: [INV], legal: "ст. 166 УПК" }
+      - { id: SK-03, name: Подследственность, request_type: SK_SUBORDINATION, roles: [INV_LEAD] }
+      - { id: SK-04, name: Судебная экспертиза, request_type: SK_EXPERTISE, roles: [INV] }
+      - { id: SK-05, name: Процессуальный контроль, module: case_management, roles: [INV_LEAD] }
+      - { id: SK-06, name: Криминалистика, module: evidence, roles: [INV] }
+      - { id: SK-07, name: Исполнение запросов, roles: [EXEC] }
+
+  - id: PROSECUTOR
+    name: Прокуратура РФ
+    role_codes: [PROSEC]
+    contour: [supervisory]
+    primary_laws:
+      - { id: "2202-1", title: "О прокуратуре РФ", articles: ["1", "21", "22"] }
+      - { id: "UPK", articles: ["37", "151", "226"] }
+    systems: [GAS_PRAVOSUDIE]
+    epsok_modules: [case_management, deadlines, audit, horizon]
+    platform_functions:
+      - { id: PRO-01, name: Надзорный доступ к делу, module: case_management, roles: [PROSEC] }
+      - { id: PRO-02, name: Контроль сроков УПК, module: deadlines, roles: [PROSEC] }
+      - { id: PRO-03, name: Serendipity reveal, module: horizon, roles: [PROSEC], policy: POL-007 }
+      - { id: PRO-04, name: Продление сроков, request_type: PROSEC_EXTENSION, roles: [PROSEC] }
+      - { id: PRO-05, name: Спор подследственности, request_type: PROSEC_SUBORDINATION, roles: [PROSEC] }
+      - { id: PRO-06, name: Аудит массового доступа, module: audit, roles: [PROSEC, AUDIT] }
+
+  - id: FSB
+    name: ФСБ России
+    role_codes: [OPS, INV, EXEC]
+    contour: [operative, classified]
+    primary_laws:
+      - { id: "40-FZ", title: "О ФСБ" }
+      - { id: "144-FZ", title: "Об ОРД" }
+      - { id: "5485-1", title: "О государственной тайне" }
+      - { id: "210-FZ", title: "Разграничение с МВД" }
+    systems: [FSB_IS]
+    epsok_modules: [operative_contour, interagency_hub, link_graph, osint]
+    platform_functions:
+      - { id: FSB-01, name: Запрос в ОРД, request_type: FSB_ORD_QUERY, roles: [OPS], requires: ord_number }
+      - { id: FSB-02, name: Связка грифованных дел, request_type: FSB_CASE_LINK, roles: [INV, OPS] }
+      - { id: FSB-03, name: Передача в следственный, module: case_management, roles: [INV_LEAD], legal: "ст. 89 УПК" }
+      - { id: FSB-04, name: Исполнение запросов, roles: [EXEC] }
+      - { id: FSB-05, name: Скан открытых источников, module: osint, roles: [INV, OPS], policy: POL-006 }
+
+  - id: FNS
+    name: ФНС России
+    role_codes: [EXEC]
+    contour: [executive]
+    primary_laws:
+      - { id: "134-FZ", title: "О налоговых органах" }
+      - { id: "129-FZ", title: "О регистрации ЮЛ и ИП" }
+      - { id: "NK-RF", articles: ["93", "102"] }
+    systems: [AIS_FNS, EGRUL]
+    epsok_modules: [interagency_hub, link_graph]
+    platform_functions:
+      - { id: FNS-01, name: ЕГРЮЛ / ЕГРИП, request_type: FNS_EGRUL, roles: [INV], sla: "1d" }
+      - { id: FNS-02, name: 2-НДФЛ / доходы, request_type: FNS_INCOME_2NDFL, roles: [INV], sla: "3d" }
+      - { id: FNS-03, name: Налоговая декларация, request_type: FNS_DECLARATION, roles: [INV] }
+      - { id: FNS-04, name: Сведения о счетах, request_type: FNS_ACCOUNT_INFO, roles: [INV] }
+      - { id: FNS-05, name: Проверка ИНН, request_type: FNS_INN_CHECK, roles: [INV, ANALYST] }
+      - { id: FNS-06, name: Исполнение запроса, roles: [EXEC] }
+
+  - id: RFM
+    name: Росфинмониторинг
+    role_codes: [EXEC, ANALYST]
+    contour: [executive, analytic]
+    primary_laws:
+      - { id: "115-FZ", title: "О ПОД/ФТ", articles: ["7", "8"] }
+      - { id: "173-FZ", title: "О валютном регулировании" }
+    systems: [FES]
+    epsok_modules: [interagency_hub, link_graph, analytics]
+    platform_functions:
+      - { id: RFM-01, name: Движение средств, request_type: RFM_TRANSACTIONS, roles: [INV], sla: "3d" }
+      - { id: RFM-02, name: Признаки ПОД/ФТ, request_type: RFM_PODFT_ALERT, roles: [INV] }
+      - { id: RFM-03, name: Цепочка операций, request_type: RFM_CHAIN, roles: [INV] }
+      - { id: RFM-04, name: MO-кластер обнал, module: analytics, roles: [ANALYST] }
+      - { id: RFM-05, name: Исполнение запроса, roles: [EXEC] }
+
+  - id: FTS
+    name: ФТС России
+    role_codes: [EXEC]
+    contour: [executive]
+    primary_laws:
+      - { id: "289-FZ", title: "О таможенном регулировании" }
+      - { id: "EAEU-TC", title: "Таможенный кодекс ЕАЭС" }
+    systems: [FTS_IS]
+    epsok_modules: [interagency_hub, link_graph]
+    platform_functions:
+      - { id: FTS-01, name: Таможенная декларация, request_type: FTS_DECLARATION, roles: [INV], sla: "3d" }
+      - { id: FTS-02, name: Контрагент / маршрут, request_type: FTS_CONSIGNOR, roles: [INV] }
+      - { id: FTS-03, name: Код ТН ВЭД, request_type: FTS_TNVED, roles: [INV] }
+      - { id: FTS-04, name: Исполнение запроса, roles: [EXEC] }
+
+  - id: FSIN
+    name: ФСИН России
+    role_codes: [EXEC]
+    contour: [executive]
+    primary_laws:
+      - { id: "196-FZ", title: "Об УИС" }
+      - { id: "103-FZ", title: "О содержании под стражей" }
+    systems: [FRD]
+    epsok_modules: [interagency_hub, deadlines]
+    platform_functions:
+      - { id: FSIN-01, name: Место отбывания, request_type: FSIN_CUSTODY, roles: [INV], sla: "2d" }
+      - { id: FSIN-02, name: УДО, request_type: FSIN_PAROLE, roles: [INV] }
+      - { id: FSIN-03, name: СИЗО, request_type: FSIN_PRETRIAL, roles: [INV], legal: "103-ФЗ" }
+      - { id: FSIN-04, name: Исполнение запроса, roles: [EXEC] }
+
+  - id: RGV
+    name: Росгвардия
+    role_codes: [EXEC, OPS]
+    contour: [investigative, operative]
+    primary_laws:
+      - { id: "226-FZ", title: "О войсках национальной гвардии" }
+      - { id: "150-FZ", title: "Об оружии" }
+    systems: [RGV_IS]
+    epsok_modules: [interagency_hub]
+    platform_functions:
+      - { id: RGV-01, name: Разрешение на оружие, request_type: RGV_WEAPON, roles: [INV], sla: "2d" }
+      - { id: RGV-02, name: Учёт оружия / ЧОО, request_type: RGV_LICENSE, roles: [INV] }
+      - { id: RGV-03, name: Исполнение запроса, roles: [EXEC] }
+
+  - id: COURT
+    name: Суды РФ
+    role_codes: [INV, PROSEC]
+    contour: [investigative, supervisory]
+    primary_laws:
+      - { id: "118-FZ", title: "О судебной системе" }
+      - { id: "UPK", articles: ["75", "87", "109", "165", "182"] }
+    systems: [GAS_PRAVOSUDIE]
+    epsok_modules: [evidence, deadlines]
+    platform_functions:
+      - { id: CRT-01, name: Судебное определение, request_type: CRT_COURT_ORDER, roles: [INV] }
+      - { id: CRT-02, name: Продление содержания под стражей, module: deadlines, roles: [INV, PROSEC] }
+      - { id: CRT-03, name: Пакет доказательств в суд, module: evidence, roles: [INV] }
+
+  - id: MINDIG
+    name: Минцифры России
+    role_codes: [ADMIN, TECH_ADMIN]
+    contour: [administrative]
+    primary_laws:
+      - { id: "210-FZ", title: "Электронное взаимодействие", articles: ["2"] }
+      - { id: "149-FZ", title: "Об информации" }
+      - { id: "187-FZ", title: "О безопасности КИИ" }
+    systems: [SMEV, ESIA]
+    epsok_modules: [tech_admin, smev_gateway]
+    platform_functions:
+      - { id: MIN-01, name: Оператор СМЭV, module: tech_admin, roles: [TECH_ADMIN] }
+      - { id: MIN-02, name: ЕСИА, module: identity, roles: [ADMIN] }
+      - { id: MIN-03, name: Регистрация ФГИС, roles: [ADMIN] }
+
+# Типы межведомственных запросов (расширенный реестр)
+request_types:
+  - { type: MVD_PERSON_CHECK, agency: MVD, label: "Проверка по ГИАЦ", law: "3-ФЗ", sla_hours: 4 }
+  - { type: MVD_WANTED, agency: MVD, label: "Розыск / ИБД", law: "3-ФЗ", sla_hours: 4 }
+  - { type: MVD_VEHICLE, agency: MVD, label: "Транспорт / ГИБДД", law: "3-ФЗ", sla_hours: 4 }
+  - { type: MVD_CDR, agency: MVD, label: "CDR (ст. 186 УПК)", law: "УПК 186", sla_hours: 24 }
+  - { type: SK_CASE_LINK, agency: SK, label: "Смежное дело", law: "403-ФЗ", sla_hours: 24 }
+  - { type: SK_MATERIALS, agency: SK, label: "Копии материалов", law: "УПК 166", sla_hours: 48 }
+  - { type: SK_SUBORDINATION, agency: SK, label: "Подследственность", law: "УПК 151", sla_hours: 24 }
+  - { type: SK_EXPERTISE, agency: SK, label: "Судебная экспертиза", law: "УПК 195", sla_hours: 120 }
+  - { type: PROSEC_EXTENSION, agency: PROSECUTOR, label: "Продление сроков", law: "УПК 226", internal: true }
+  - { type: PROSEC_SUBORDINATION, agency: PROSECUTOR, label: "Спор подследственности", law: "УПК 151", internal: true }
+  - { type: FNS_EGRUL, agency: FNS, label: "Выписка ЕГРЮЛ", law: "129-ФЗ", sla_hours: 24 }
+  - { type: FNS_INCOME_2NDFL, agency: FNS, label: "2-НДФЛ", law: "НК 102", sla_hours: 72 }
+  - { type: FNS_DECLARATION, agency: FNS, label: "Налоговая декларация", law: "НК 93", sla_hours: 72 }
+  - { type: FNS_ACCOUNT_INFO, agency: FNS, label: "Сведения о счетах", law: "НК 93", sla_hours: 72 }
+  - { type: FNS_INN_CHECK, agency: FNS, label: "Проверка ИНН", law: "134-ФЗ", sla_hours: 24 }
+  - { type: RFM_TRANSACTIONS, agency: RFM, label: "Движение средств", law: "115-ФЗ", sla_hours: 72 }
+  - { type: RFM_PODFT_ALERT, agency: RFM, label: "Признаки ПОД/ФТ", law: "115-ФЗ", sla_hours: 24 }
+  - { type: RFM_CHAIN, agency: RFM, label: "Цепочка операций", law: "115-ФЗ", sla_hours: 72 }
+  - { type: FTS_DECLARATION, agency: FTS, label: "Таможенная декларация", law: "289-ФЗ", sla_hours: 72 }
+  - { type: FTS_CONSIGNOR, agency: FTS, label: "Контрагент / маршрут", law: "289-ФЗ", sla_hours: 72 }
+  - { type: FTS_TNVED, agency: FTS, label: "Код ТН ВЭД", law: "289-ФЗ", sla_hours: 72 }
+  - { type: FSIN_CUSTODY, agency: FSIN, label: "Место отбывания", law: "196-ФЗ", sla_hours: 48 }
+  - { type: FSIN_PAROLE, agency: FSIN, label: "УДО", law: "196-ФЗ", sla_hours: 48 }
+  - { type: FSIN_PRETRIAL, agency: FSIN, label: "СИЗО", law: "103-ФЗ", sla_hours: 48 }
+  - { type: RGV_WEAPON, agency: RGV, label: "Разрешение на оружие", law: "150-ФЗ", sla_hours: 48 }
+  - { type: RGV_LICENSE, agency: RGV, label: "Учёт оружия / ЧОО", law: "226-ФЗ", sla_hours: 48 }
+  - { type: FSB_ORD_QUERY, agency: FSB, label: "Запрос ОРД", law: "40-ФЗ", sla_hours: null, classified: true }
+  - { type: FSB_CASE_LINK, agency: FSB, label: "Связка дел (гриф)", law: "40-ФЗ", classified: true }
+  - { type: CRT_COURT_ORDER, agency: COURT, label: "Судебное определение", law: "УПК 165", sla_hours: null }

@@ -1,0 +1,135 @@
+# Whitelist модулей SpiderFoot для OSINT Worker ЕПСОК
+# Версия: 1.0
+# См. docs/technical/osint-service.md
+
+version: "1.0"
+
+# Глобально запрещённые категории (не включать ни в один профиль)
+deny_categories:
+  - "Real World"          # физическая разведка
+  - "Crawling and Scanning"  # port scan, nmap — кроме явно разрешённых
+
+deny_modules:
+  - sfp__stor_db          # persisting SQLite на Worker запрещён
+  - sfp_tor               # dark web — только по отдельному решению
+  - sfp_nmap
+  - sfp_portscan_tcp
+  - sfp_tool_nmap
+  - sfp_hunter            # зарубежный API; замена — ведомственный запрос
+  - sfp_fullcontact
+  - sfp_haveibeenpwned    # commercial API; опционально на фазе 3
+  - sfp_socialprofiles    # Google/Bing CSE — внешние API; замена — sfp_accounts
+
+# Разрешённые модули (базовый пул)
+allow_modules:
+  storage:
+    - sfp__stor_stdout     # кастомный: JSON-lines → Orchestrator
+  extractors:
+    - sfp_email
+    - sfp_phone
+    - sfp_names
+    - sfp_company
+    - sfp_countryname
+  spider:
+    - sfp_spider
+    - sfp_pageinfo
+    - sfp_webframework
+    - sfp_webserver
+  dns_whois:
+    - sfp_dns
+    - sfp_dnsresolve
+    - sfp_dnsraw
+    - sfp_whois
+  social:
+    - sfp_accounts
+    - sfp_gravatar
+    - sfp_keybase
+    - sfp_social
+  metadata:
+    - sfp_filemeta
+    - sfp_webanalytics
+    - sfp_sslcert
+
+profiles:
+  passive_ru:
+    description: "Только пассивный сбор: WHOIS, DNS, экстракторы из уже полученного контента"
+    use_cases: ["Passive"]
+    modules:
+      - sfp__stor_stdout
+      - sfp_email
+      - sfp_phone
+      - sfp_names
+      - sfp_dns
+      - sfp_dnsresolve
+      - sfp_whois
+      - sfp_pageinfo
+
+  footprint_ru:
+    description: "Пассивный след организации/домена: spider + аккаунты + gravatar"
+    use_cases: ["Passive", "Footprint"]
+    modules:
+      - sfp__stor_stdout
+      - sfp_spider
+      - sfp_email
+      - sfp_phone
+      - sfp_names
+      - sfp_accounts
+      - sfp_gravatar
+      - sfp_keybase
+      - sfp_dns
+      - sfp_dnsresolve
+      - sfp_whois
+      - sfp_pageinfo
+      - sfp_webanalytics
+      - sfp_sslcert
+
+  investigate_ru:
+    description: "Расширенный OSINT по email/username/имени в рамках дела"
+    use_cases: ["Passive", "Footprint", "Investigate"]
+    modules:
+      - sfp__stor_stdout
+      - sfp_spider
+      - sfp_email
+      - sfp_phone
+      - sfp_names
+      - sfp_accounts
+      - sfp_gravatar
+      - sfp_keybase
+      - sfp_social
+      - sfp_dns
+      - sfp_dnsresolve
+      - sfp_dnsraw
+      - sfp_whois
+      - sfp_pageinfo
+      - sfp_webframework
+      - sfp_webserver
+      - sfp_filemeta
+      - sfp_webanalytics
+      - sfp_sslcert
+      - sfp_company
+
+limits:
+  max_scan_duration_minutes: 30
+  max_findings_per_scan: 500
+  max_scans_per_user_per_day: 10
+  max_scans_per_case_per_day: 50
+  max_concurrent_workers_per_region: 5
+  finding_value_max_bytes: 4096
+
+auto_import:
+  # normalizedType → auto import to graph without review
+  allow:
+    - email
+    - phone
+    - username
+    - social_profile
+    - external_account
+    - domain
+    - ip
+    - address
+    - location
+  require_review:
+    - person_name
+    - raw_enrichment
+    - breach_indicator
+    - employment_hint

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/osint-scan.json",
+  "title": "OsintScan",
+  "description": "Задача OSINT-сбора в рамках дела ЕПСОК",
+  "type": "object",
+  "required": [
+    "id",
+    "caseId",
+    "status",
+    "targetType",
+    "targetValueHash",
+    "moduleProfile",
+    "legalBasis",
+    "contour",
+    "requestedBy"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "EPSOK-OSINT-{uuid}"
+    },
+    "caseId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "expired"
+      ]
+    },
+    "targetType": {
+      "type": "string",
+      "enum": [
+        "HUMAN_NAME",
+        "EMAILADDR",
+        "PHONE_NUMBER",
+        "USERNAME",
+        "INTERNET_NAME",
+        "IP_ADDRESS"
+      ]
+    },
+    "targetValue": {
+      "type": "string",
+      "description": "Значение цели; передаётся при создании, в ответах может быть замаскировано",
+      "maxLength": 512
+    },
+    "targetValueHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 нормализованного значения цели"
+    },
+    "moduleProfile": {
+      "type": "string",
+      "enum": ["passive_ru", "footprint_ru", "investigate_ru"]
+    },
+    "legalBasis": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000,
+      "description": "Постановление, определение или номер ОРД"
+    },
+    "contour": {
+      "type": "string",
+      "enum": ["investigative", "operative"]
+    },
+    "requestedBy": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "findingCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "workerScanId": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "errorCode": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "errorMessage": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

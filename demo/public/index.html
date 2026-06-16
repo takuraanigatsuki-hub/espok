@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Anti-cache: reduce risk of stale auth/login screen on proxies -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script>
+    (function () {
+      var h = location.hostname;
+      if (location.protocol === 'http:' && (h === 'epsok.ru' || h === 'www.epsok.ru')) {
+        location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+      }
+    })();
+  </script>
+  <title>ЕПСОК — Единая платформа следственно-оперативной координации</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=2.5.1">
+  <script src="security.js?v=2.5.1"></script>
+  <script>
+    EpsokSecurity.bootstrapAuthShell('epsok-session', 'epsok-session-persistent');
+  </script>
+  <style>
+    html, body { height: 100%; }
+    html[data-auth="app"] #login-screen { display: none !important; }
+    html[data-auth="app"] #app-root { display: flex !important; }
+    html[data-auth="booting"] #app-root,
+    html[data-auth="login"] #app-root { display: none !important; }
+    html[data-auth="booting"] #login-screen,
+    html[data-auth="login"] #login-screen { display: flex !important; }
+    html[data-auth="booting"], html[data-auth="booting"] body,
+    html[data-auth="login"], html[data-auth="login"] body {
+      overflow: hidden;
+      height: 100%;
+      position: fixed;
+      width: 100%;
+      overscroll-behavior: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Экран авторизации -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-tricolor" aria-hidden="true"></div>
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="login-logo" aria-hidden="true">
+            <img src="epsok-mark.svg" alt="" class="epsok-mark" width="52" height="52">
+          </div>
+          <div>
+            <h1>ЕПСОК</h1>
+            <p>Единая платформа следственно-оперативной координации</p>
+          </div>
+        </div>
+        <form class="login-form" id="login-form" onsubmit="submitLogin(event)">
+          <label class="login-field">
+            <input type="text" id="login-user" name="username" autocomplete="username" placeholder="Логин" aria-label="Логин" required>
+          </label>
+          <label class="login-field">
+            <input type="password" id="login-pass" name="password" autocomplete="current-password" placeholder="Пароль" aria-label="Пароль" required>
+          </label>
+          <label class="login-remember">
+            <input type="checkbox" id="login-remember">
+            <span>Запомнить на этом устройстве</span>
+          </label>
+          <p class="login-error hidden" id="login-error" role="alert"></p>
+          <p class="login-secure-hint hidden muted" id="login-secure-hint">Сайт открыт по HTTP — вход в демо-режиме. Для полного контура включите HTTPS на домене.</p>
+          <button type="submit" class="btn-primary login-submit" id="login-submit-btn">Войти</button>
+        </form>
+        <div class="login-demo-hint">
+          <p class="login-demo-title">Демо-доступ</p>
+          <p class="muted login-demo-pass">Пароль для демо: <code>epsok2028</code></p>
+          <button type="button" class="login-demo-btn login-demo-btn--beta" onclick="loginDemoUser('takura.anigatsuki')">
+            <strong>takura.anigatsuki</strong> — Такура · высший уровень доступа (бета)
+          </button>
+          <button type="button" class="login-demo-btn" onclick="loginDemoUser('ivanov.sp')">
+            <strong>ivanov.sp</strong> — следователь · контур следствия
+          </button>
+          <button type="button" class="login-demo-btn" onclick="loginDemoUser('sidorov.av')">
+            <strong>sidorov.av</strong> — тех. админ · контур ЦОД
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app hidden" id="app-root">
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileNav()" aria-hidden="true"></div>
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-tricolor" aria-hidden="true"></div>
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon" aria-hidden="true">
+            <img src="epsok-mark.svg" alt="" class="epsok-mark" width="36" height="36">
+          </div>
+          <div class="logo-text">
+            <strong>ЕПСОК</strong>
+            <span>Следственно-оперативная координация</span>
+          </div>
+        </div>
+        <button type="button" class="sidebar-collapse-btn" id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" aria-label="Свернуть меню" title="Свернуть">
+          <span class="sidebar-collapse-icon" aria-hidden="true">‹</span>
+        </button>
+      </div>
+      <div class="sidebar-corp-mail" id="sidebar-corp-mail">
+        <div class="sidebar-corp-mail-info" aria-label="Корпоративная почта">
+          <span class="sidebar-corp-mail-icon" aria-hidden="true">✉</span>
+          <span class="sidebar-corp-mail-text">
+            <span class="sidebar-corp-mail-label">Корп. почта</span>
+            <span class="sidebar-corp-mail-addr" id="sidebar-corp-email">ivanov.sp@epsok.gov.ru</span>
+          </span>
+          <span class="sidebar-corp-mail-badge hidden" id="sidebar-corp-mail-badge">0</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Основное меню">
+        <p class="nav-section-label">Обзор</p>
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">◫</span><span class="nav-label">Дашборд</span>
+        </button>
+
+        <p class="nav-section-label">Следствие</p>
+        <button class="nav-item" data-view="cases">
+          <span class="nav-icon">▤</span><span class="nav-label">Реестр дел</span>
+        </button>
+        <button class="nav-item" data-view="case">
+          <span class="nav-icon">◧</span><span class="nav-label">Карточка дела</span>
+        </button>
+        <button class="nav-item" data-view="graph">
+          <span class="nav-icon">◎</span><span class="nav-label">Граф связей</span>
+        </button>
+        <button class="nav-item" data-view="deadlines">
+          <span class="nav-icon">⏱</span><span class="nav-label">Сроки УПК</span>
+        </button>
+        <button class="nav-item" data-view="suspects">
+          <span class="nav-icon">◈</span><span class="nav-label">Дела фигурантов</span>
+        </button>
+
+        <p class="nav-section-label">Обмен данными</p>
+        <button class="nav-item" data-view="requests">
+          <span class="nav-icon">⇄</span>
+          <span class="nav-text">
+            <span class="nav-label">Запросы</span>
+          </span>
+          <span class="nav-item-badge hidden" id="sidebar-requests-badge">0</span>
+        </button>
+        <button class="nav-item" data-view="agencies">
+          <span class="nav-icon">▣</span><span class="nav-label">Ведомства</span>
+        </button>
+        <button class="nav-item" data-view="mail">
+          <span class="nav-icon">✉</span><span class="nav-label">Почта</span>
+        </button>
+
+        <p class="nav-section-label">Аналитика</p>
+        <button class="nav-item" data-view="osint">
+          <span class="nav-icon">⌕</span>
+          <span class="nav-text">
+            <span class="nav-label">Открытые источники</span>
+            <span class="nav-sublabel">OSINT</span>
+          </span>
+        </button>
+        <button class="nav-item nav-horizon" data-view="horizon">
+          <span class="nav-icon">◈</span><span class="nav-label">Горизонт</span>
+        </button>
+
+        <p class="nav-section-label nav-section-hr hidden">Кадры</p>
+        <button class="nav-item nav-staff hidden" data-view="staff">
+          <span class="nav-icon"><svg class="icon-staff-users" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M12.3 12.22C12.8336 11.7581 13.2616 11.1869 13.5549 10.545C13.8482 9.90316 14 9.20571 14 8.5C14 7.17392 13.4732 5.90215 12.5355 4.96447C11.5979 4.02678 10.3261 3.5 9 3.5C7.67392 3.5 6.40215 4.02678 5.46447 4.96447C4.52678 5.90215 4 7.17392 4 8.5C3.99999 9.20571 4.1518 9.90316 4.44513 10.545C4.73845 11.1869 5.16642 11.7581 5.7 12.22C4.30014 12.8539 3.11247 13.8775 2.27898 15.1685C1.4455 16.4596 1.00147 17.9633 1 19.5C1 19.7652 1.10536 20.0196 1.29289 20.2071C1.48043 20.3946 1.73478 20.5 2 20.5C2.26522 20.5 2.51957 20.3946 2.70711 20.2071C2.89464 20.0196 3 19.7652 3 19.5C3 17.9087 3.63214 16.3826 4.75736 15.2574C5.88258 14.1321 7.4087 13.5 9 13.5C10.5913 13.5 12.1174 14.1321 13.2426 15.2574C14.3679 16.3826 15 17.9087 15 19.5C15 19.7652 15.1054 20.0196 15.2929 20.2071C15.4804 20.3946 15.7348 20.5 16 20.5C16.2652 20.5 16.5196 20.3946 16.7071 20.2071C16.8946 20.0196 17 19.7652 17 19.5C16.9985 17.9633 16.5545 16.4596 15.721 15.1685C14.8875 13.8775 13.6999 12.8539 12.3 12.22ZM9 11.5C8.40666 11.5 7.82664 11.3241 7.33329 10.9944C6.83994 10.6648 6.45542 10.1962 6.22836 9.64805C6.0013 9.09987 5.94189 8.49667 6.05764 7.91473C6.1734 7.33279 6.45912 6.79824 6.87868 6.37868C7.29824 5.95912 7.83279 5.6734 8.41473 5.55764C8.99667 5.44189 9.59987 5.5013 10.1481 5.72836C10.6962 5.95542 11.1648 6.33994 11.4944 6.83329C11.8241 7.32664 12 7.90666 12 8.5C12 9.29565 11.6839 10.0587 11.1213 10.6213C10.5587 11.1839 9.79565 11.5 9 11.5ZM18.74 11.82C19.38 11.0993 19.798 10.2091 19.9438 9.25634C20.0896 8.30362 19.9569 7.32907 19.5618 6.45C19.1666 5.57093 18.5258 4.8248 17.7165 4.30142C16.9071 3.77805 15.9638 3.49974 15 3.5C14.7348 3.5 14.4804 3.60536 14.2929 3.79289C14.1054 3.98043 14 4.23478 14 4.5C14 4.76522 14.1054 5.01957 14.2929 5.20711C14.4804 5.39464 14.7348 5.5 15 5.5C15.7956 5.5 16.5587 5.81607 17.1213 6.37868C17.6839 6.94129 18 7.70435 18 8.5C17.9986 9.02524 17.8593 9.5409 17.5961 9.99542C17.3328 10.4499 16.9549 10.8274 16.5 11.09C16.3517 11.1755 16.2279 11.2977 16.1404 11.4447C16.0528 11.5918 16.0045 11.7589 16 11.93C15.9958 12.0998 16.0349 12.2678 16.1137 12.4183C16.1924 12.5687 16.3081 12.6967 16.45 12.79L16.84 13.05L16.97 13.12C18.1754 13.6917 19.1923 14.596 19.901 15.7263C20.6096 16.8566 20.9805 18.1659 20.97 19.5C20.97 19.7652 21.0754 20.0196 21.2629 20.2071C21.4504 20.3946 21.7048 20.5 21.97 20.5C22.2352 20.5 22.4896 20.3946 22.6771 20.2071C22.8646 20.0196 22.97 19.7652 22.97 19.5C22.9782 17.9654 22.5938 16.4543 21.8535 15.1101C21.1131 13.7659 20.0413 12.6333 18.74 11.82Z" fill="currentColor"/></svg></span><span class="nav-label">Сотрудники</span>
+        </button>
+
+        <p class="nav-section-label nav-section-admin hidden">Система</p>
+        <button class="nav-item nav-admin hidden" data-view="admin">
+          <span class="nav-icon">⚙</span><span class="nav-label" id="nav-admin-label">Тех. админ</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info-wrap">
+          <button type="button" class="user-info" id="user-info-btn" title="Меню пользователя" aria-expanded="false" aria-haspopup="true">
+            <span class="user-name" id="user-name">Иванов С.П.</span>
+          </button>
+          <div class="user-menu-dropdown hidden" id="user-menu-dropdown">
+            <button type="button" onclick="closeUserMenu(); openMyProfile()">Личное дело</button>
+            <button type="button" onclick="closeUserMenu(); openDemoRoleModal()">Сменить роль</button>
+            <button type="button" onclick="closeUserMenu(); exportPersonalAuditCsv()">Мои действия (CSV)</button>
+            <button type="button" class="hidden" id="user-menu-audit-export" onclick="closeUserMenu(); exportAuditLogCsv()">Журнал аудита (CSV)</button>
+            <button type="button" onclick="closeUserMenu(); lockNow()">Заблокировать</button>
+            <button type="button" class="user-menu-logout" onclick="closeUserMenu(); logout()">Выйти</button>
+          </div>
+        </div>
+        <div class="demo-toolbar">
+          <button type="button" class="demo-badge demo-badge-btn" onclick="openDemoRoleModal()" title="Сменить роль в демо">Демо</button>
+        </div>
+        <nav class="sidebar-util-links" aria-label="Служебные ссылки">
+          <a href="#" data-view="help" onclick="showUtilView('help'); return false;">Справка</a>
+          <a href="#" data-view="regulations" onclick="showUtilView('regulations'); return false;">Регламенты</a>
+          <a href="#" data-view="support" onclick="showUtilView('support'); return false;">Поддержка</a>
+          <a href="#" class="hidden" id="sidebar-access-request-link" onclick="openAccessRequestModal(); return false;">Запросить доступ</a>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <div class="header-left">
+          <button type="button" class="mobile-nav-toggle" id="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Открыть меню" aria-expanded="false" aria-controls="app-sidebar">☰</button>
+          <div class="header-titles">
+            <h1 id="page-title">Дашборд руководителя</h1>
+            <span class="header-sub">Краснодарский край · Пилот · ФГИС</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-tools" id="header-tools">
+            <div class="header-search" id="header-search-wrap">
+              <label class="header-search-label" for="global-search-input">
+                <span class="header-search-icon" aria-hidden="true">⌕</span>
+                <input type="search" id="global-search-input" class="header-search-input" placeholder="Поиск дел, запросов, фигурантов…" autocomplete="off" onfocus="openGlobalSearch()" oninput="runGlobalSearch(this.value)" aria-label="Глобальный поиск" aria-controls="global-search-dropdown" aria-expanded="false">
+                <kbd class="header-search-kbd" aria-hidden="true">Ctrl+K</kbd>
+              </label>
+              <div class="global-search-dropdown hidden" id="global-search-dropdown" role="listbox" aria-label="Результаты поиска"></div>
+            </div>
+            <div class="header-notifications-wrap" id="header-notifications-wrap">
+              <button type="button" class="header-notifications-btn" id="header-notifications-btn" onclick="toggleNotificationsPanel()" aria-label="Уведомления" aria-expanded="false" title="Центр уведомлений">
+                <span class="header-notifications-icon" aria-hidden="true">🔔</span>
+                <span class="header-notifications-badge hidden" id="header-notifications-badge">0</span>
+              </button>
+              <div class="notifications-panel hidden" id="notifications-panel" role="dialog" aria-label="Центр уведомлений"></div>
+            </div>
+          </div>
+          <div class="header-status-cluster is-compact" id="header-status-cluster">
+            <button type="button" class="header-status-toggle" id="header-status-toggle" onclick="toggleHeaderStatusCluster()" aria-expanded="false" aria-controls="header-status-details" aria-label="Статус контура и защиты" title="Статус контура">●</button>
+            <span class="status-pill session-activity-pill header-status-pinned hidden" id="session-activity-pill" title="Автоблокировка при неактивности (15 мин) · Ctrl+Shift+L">⏱ —</span>
+            <div class="header-status-details" id="header-status-details">
+              <div class="security-strip hidden" id="security-strip" hidden aria-label="Параметры защиты контура">
+                <span class="sec-pill sec-pill-gost">ГОСТ TLS 1.3</span>
+                <span class="sec-pill">AES-256-GCM</span>
+                <span class="sec-pill">HMAC</span>
+              </div>
+              <span class="status-pill online hidden" id="platform-status-pill" title="Статус платформы">● Работает</span>
+              <span class="status-pill online hidden" id="network-status-pill" title="Соединение с контуром">● В сети</span>
+              <span class="status-pill" id="contour-pill" title="Отдел · ведомство">—</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div id="dash-investigator">
+          <div class="kpi-grid" id="dash-investigator-kpi"></div>
+          <div class="grid-2" id="dash-investigator-panels"></div>
+        </div>
+        <div id="dash-executor" class="hidden"></div>
+        <div id="dash-prosecutor" class="hidden"></div>
+        <div id="dash-analyst" class="hidden"></div>
+        <div id="dash-court" class="hidden"></div>
+      </section>
+
+      <!-- CASES REGISTRY -->
+      <section class="view" id="view-cases">
+        <div class="cases-page">
+          <div class="cases-top-bar">
+            <div class="cases-top-main">
+              <p class="cases-top-lead"><span class="cases-top-policy">ПОЛ-001</span> Уровень охвата · уточнение: регион → ведомство → отдел</p>
+            </div>
+            <div class="cases-kpi-strip" id="cases-kpi-strip">
+              <div class="cases-kpi"><span class="cases-kpi-val" id="cases-kpi-total">—</span><span class="cases-kpi-label">на уровне</span></div>
+              <div class="cases-kpi"><span class="cases-kpi-val" id="cases-kpi-shown">—</span><span class="cases-kpi-label">в выборке</span></div>
+              <div class="cases-kpi warn"><span class="cases-kpi-val" id="cases-kpi-urgent">—</span><span class="cases-kpi-label">срок ≤ 7 дн.</span></div>
+            </div>
+          </div>
+
+          <div class="req-scope-tabs cases-scope-tabs" role="tablist" aria-label="Уровень дела">
+            <button type="button" class="req-scope-tab" data-scope="all" onclick="setCaseFilter('all')">Все <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab" data-scope="interagency" onclick="setCaseFilter('interagency')">Межведомственные <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab active" data-scope="intra_agency" onclick="setCaseFilter('intra_agency')">Внутри ведомства <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab" data-scope="intra_department" onclick="setCaseFilter('intra_department')">Внутри отдела <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab cases-bookmark-tab" id="cases-bookmark-tab" onclick="toggleCasesBookmarkFilter()">Избранные <span class="req-tab-count" id="cases-bookmark-count">0</span></button>
+          </div>
+
+          <details class="panel cases-filter-card" open>
+            <summary class="cases-filter-summary">Охват и фильтры</summary>
+            <div class="cases-filter-body">
+            <div class="cases-filter-steps" id="cases-filter-steps" aria-label="Шаги фильтрации">
+              <span class="cases-step" data-step="region">1 · Регион</span>
+              <span class="cases-step-arrow">→</span>
+              <span class="cases-step" data-step="agency">2 · Ведомство</span>
+              <span class="cases-step-arrow">→</span>
+              <span class="cases-step" data-step="department">3 · Отдел</span>
+            </div>
+            <div class="cases-breadcrumb" id="cases-breadcrumb"></div>
+            <div class="cases-filters">
+              <label class="field cases-filter-field" id="cases-filter-region-wrap">
+                <span>Регион</span>
+                <select id="cases-filter-region" onchange="onCasesFilterRegionChange()">
+                  <option value="">Выберите регион</option>
+                </select>
+              </label>
+              <label class="field cases-filter-field cases-filter-next hidden" id="cases-filter-agency-wrap">
+                <span>Ведомство</span>
+                <select id="cases-filter-agency" onchange="onCasesFilterAgencyChange()" disabled>
+                  <option value="">Выберите ведомство</option>
+                </select>
+              </label>
+              <label class="field cases-filter-field cases-filter-next hidden" id="cases-filter-department-wrap">
+                <span>Отдел</span>
+                <select id="cases-filter-department" onchange="onCasesFilterDepartmentChange()" disabled>
+                  <option value="">Выберите отдел</option>
+                </select>
+              </label>
+              <button type="button" class="btn-sm cases-reset-btn" onclick="resetCasesFilters()">Сбросить</button>
+            </div>
+            <p class="cases-filter-hint muted" id="cases-filter-hint">По умолчанию — дела вашего ведомства · уточните регион, ведомство и отдел при необходимости</p>
+            </div>
+          </details>
+
+          <div class="panel cases-results-panel">
+            <div class="cases-results-head">
+              <h3 id="cases-results-title">Дела</h3>
+              <span class="cases-total-pill" id="cases-total-pill">—</span>
+              <label class="cases-registry-search">
+                <span class="sr-only">Поиск в реестре</span>
+                <input type="search" id="cases-registry-search" class="cases-registry-search-input" placeholder="Поиск…" oninput="setCasesRegistrySearch(this.value)" aria-label="Поиск в реестре дел">
+              </label>
+              <button type="button" class="btn-sm" onclick="exportCasesRegistryCsv()" title="Экспорт выборки в CSV">CSV</button>
+              <button type="button" class="btn-primary btn-sm-inline cases-new-btn" onclick="openNewCaseModal()">+ Новое дело</button>
+            </div>
+            <div class="cases-status-chips" role="tablist" aria-label="Фильтр по статусу дела">
+              <button type="button" class="req-status-chip active" data-status="all" onclick="setCasesStatusFilter('all')">Все статусы</button>
+              <button type="button" class="req-status-chip" data-status="investigating" onclick="setCasesStatusFilter('investigating')">Расследуется</button>
+              <button type="button" class="req-status-chip" data-status="inquiry" onclick="setCasesStatusFilter('inquiry')">Дознание</button>
+              <button type="button" class="req-status-chip" data-status="suspended" onclick="setCasesStatusFilter('suspended')">Приостановлено</button>
+              <button type="button" class="req-status-chip" data-status="urgent" onclick="setCasesStatusFilter('urgent')">Срок ≤ 7 дн.</button>
+            </div>
+            <div class="cases-table-wrap paginated-table-body">
+              <div class="table-scroll table-scroll-paged">
+                <table class="data-table cases-table" id="cases-table">
+                  <thead>
+                    <tr>
+                      <th>Номер дела</th>
+                      <th>Уровень</th>
+                      <th>Статья</th>
+                      <th>Статус</th>
+                      <th>Этап</th>
+                      <th>Ведомство</th>
+                      <th>Ответственный</th>
+                      <th>Срок</th>
+                      <th class="cases-action-col" aria-label="Действия"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cases-table-body"></tbody>
+                </table>
+              </div>
+              <div id="cases-pagination"></div>
+            </div>
+            <div class="cases-empty-state hidden" id="cases-empty-state">
+              <p class="cases-empty-title" id="cases-empty-title">Нет дел в выборке</p>
+              <p class="muted" id="cases-empty-text">Переключите уровень охвата или уточните фильтры</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CASE -->
+      <section class="view" id="view-case">
+        <div id="case-detail-root" data-confidential="дело"></div>
+      </section>
+
+      <!-- GRAPH -->
+      <section class="view" id="view-graph">
+        <div class="graph-case-picker panel" id="graph-case-picker">
+          <h2>Граф связей</h2>
+          <p class="muted graph-picker-hint">Сначала выберите дело — каждый граф изолирован в своём контуре. Смежные дела не объединяются автоматически.</p>
+          <div class="graph-case-list" id="graph-case-list"></div>
+        </div>
+
+        <div id="graph-case-view" class="graph-case-view hidden">
+          <div class="graph-case-bar panel action-toolbar">
+            <div class="action-toolbar__row graph-case-bar-main">
+              <h2 id="graph-case-title">—</h2>
+              <span class="muted" id="graph-case-sub">—</span>
+            </div>
+            <div class="action-toolbar__row action-toolbar__actions">
+              <button type="button" class="btn-sm" onclick="clearGraphCaseSelection()">← Сменить дело</button>
+            </div>
+          </div>
+          <div class="graph-workspace">
+            <div class="panel graph-panel">
+              <div class="graph-toolbar">
+                <div class="graph-toolbar-left">
+                  <span class="graph-meta" id="graph-meta">—</span>
+                </div>
+                <div class="graph-controls">
+                  <button type="button" class="graph-ctrl-btn" id="graph-zoom-in" title="Увеличить">+</button>
+                  <button type="button" class="graph-ctrl-btn" id="graph-zoom-out" title="Уменьшить">−</button>
+                  <button type="button" class="graph-ctrl-btn" id="graph-fit" title="Вписать в экран">◎</button>
+                  <button type="button" class="graph-ctrl-btn" id="graph-relayout" title="Пересчитать раскладку">↻</button>
+                  <button type="button" class="graph-ctrl-btn graph-ctrl-btn-wide" id="graph-reset-pos" title="Сбросить расположение и камеру">⟲</button>
+                  <button type="button" class="graph-ctrl-btn graph-ctrl-btn-wide" onclick="exportGraphSnapshot()" title="Снимок PNG">📷</button>
+                </div>
+              </div>
+              <div class="graph-viewport" id="graph-viewport">
+                <canvas id="graph-canvas"></canvas>
+                <div class="graph-hint-overlay">Колесо — масштаб · Фон — панорама · Узел — выбрать · Shift+клик — путь · Shift+перетаскивание — закрепить</div>
+              </div>
+              <div class="graph-legend">
+                <span><i class="dot person"></i> Лицо</span>
+                <span><i class="dot phone"></i> Телефон</span>
+                <span><i class="dot account"></i> Счёт</span>
+                <span><i class="dot case"></i> Дело</span>
+                <span><i class="dot org"></i> Организация</span>
+                <span><i class="dot social"></i> Открытые источники</span>
+              </div>
+            </div>
+            <div class="graph-side-stack">
+              <aside class="panel graph-path-panel" id="graph-path-panel"></aside>
+              <aside class="panel graph-detail-panel" id="node-detail">
+                <div class="graph-detail-placeholder">
+                  <span class="graph-detail-placeholder-icon" aria-hidden="true">◎</span>
+                  <h2>Узел не выбран</h2>
+                  <p class="muted">Кликните узел на графе — карточка откроется здесь</p>
+                </div>
+              </aside>
+              <aside class="panel graph-comms-panel" id="graph-comms-panel" hidden></aside>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AGENCIES -->
+      <section class="view" id="view-agencies">
+        <div class="agencies-page">
+          <div class="agencies-top-bar">
+            <div class="agencies-top-main view-context-bar">
+              <p class="muted" id="agencies-context"></p>
+            </div>
+            <label class="agencies-search-field">
+              <span class="sr-only">Поиск ведомств</span>
+              <input type="search" id="agencies-search" class="agencies-search-input" placeholder="Поиск ведомств…" oninput="setAgenciesSearch(this.value)">
+            </label>
+            <select id="agencies-category-filter" class="agencies-category-select" onchange="setAgenciesCategoryFilter(this.value)" aria-label="Категория ведомства">
+              <option value="">Все категории</option>
+              <option value="investigative">Следствие</option>
+              <option value="supervisory">Надзор</option>
+              <option value="operative">Оперативный контур</option>
+              <option value="law_enforcement">Правоохранение</option>
+              <option value="executive">Исполнитель</option>
+            </select>
+            <div class="agencies-kpi-strip" id="agencies-kpi-strip">
+              <div class="agencies-kpi"><span class="agencies-kpi-val" id="agencies-kpi-count">—</span><span class="agencies-kpi-label">в справочнике</span></div>
+              <div class="agencies-kpi"><span class="agencies-kpi-val" id="agencies-kpi-req">—</span><span class="agencies-kpi-label">типов запросов</span></div>
+            </div>
+          </div>
+          <div class="agencies-layout">
+            <nav class="agencies-nav" id="agencies-nav" role="tablist" aria-label="Список ведомств"></nav>
+            <div class="agencies-detail-wrap" id="agency-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="view" id="view-profile">
+        <div class="profile-page profile-page-compact">
+          <div class="profile-tabs-row">
+            <div class="profile-tabs" role="tablist">
+              <button type="button" class="profile-tab active" data-tab="card" onclick="setProfileTab('card')">Служебные данные</button>
+              <button type="button" class="profile-tab" data-tab="requests" onclick="setProfileTab('requests')">Мои заявки</button>
+            </div>
+            <p class="muted profile-tabs-meta" id="profile-context">Служебные данные и кадровые заявки</p>
+          </div>
+          <div id="profile-root"></div>
+        </div>
+      </section>
+
+      <!-- STAFF -->
+      <section class="view" id="view-staff">
+        <div class="staff-page">
+          <header class="staff-hero" id="staff-hero"></header>
+          <div class="staff-layout">
+            <nav class="staff-module-nav" id="staff-module-nav" role="tablist" aria-label="Разделы кадров"></nav>
+            <div class="staff-content" id="staff-root"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUSPECTS -->
+      <section class="view" id="view-suspects">
+        <div class="suspects-page">
+          <div class="suspects-toolbar-wrap" id="suspects-toolbar-wrap"></div>
+          <div class="suspects-layout">
+            <nav class="suspects-nav" id="suspects-nav"></nav>
+            <div class="suspects-detail" id="suspects-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REQUESTS -->
+      <section class="view" id="view-requests">
+        <div class="panel panel-table paginated-table-panel">
+          <div class="panel-header requests-header">
+            <div class="view-context-bar">
+              <p class="muted requests-summary" id="requests-summary"></p>
+              <div class="hidden" id="requests-executor-blind"></div>
+              <p class="muted requests-notify-hint hidden" id="requests-notify-hint"></p>
+            </div>
+            <button class="btn-primary" id="requests-new-btn" onclick="openNewRequestModal()">+ Новый запрос</button>
+            <button type="button" class="btn-sm" onclick="exportRequestsCsv()" title="Экспорт выборки в CSV">Экспорт CSV</button>
+          </div>
+          <div class="req-scope-tabs" role="tablist" aria-label="Уровень запроса">
+            <button type="button" class="req-scope-tab active" data-scope="all" onclick="setRequestFilter('all')">Все <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab" data-scope="interagency" onclick="setRequestFilter('interagency')">Межведомственные <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab" data-scope="intra_agency" onclick="setRequestFilter('intra_agency')">Внутри ведомства <span class="req-tab-count">0</span></button>
+            <button type="button" class="req-scope-tab" data-scope="intra_department" onclick="setRequestFilter('intra_department')">Внутри отдела <span class="req-tab-count">0</span></button>
+          </div>
+          <div class="req-status-chips" role="tablist" aria-label="Фильтр по статусу">
+            <button type="button" class="req-status-chip active" data-status="all" onclick="setRequestStatusFilter('all')">Все статусы</button>
+            <button type="button" class="req-status-chip" data-status="overdue" onclick="setRequestStatusFilter('overdue')">Просрочено SLA</button>
+            <button type="button" class="req-status-chip" data-status="progress" onclick="setRequestStatusFilter('progress')">В работе</button>
+            <button type="button" class="req-status-chip" data-status="draft" onclick="setRequestStatusFilter('draft')">Черновики</button>
+            <button type="button" class="req-status-chip" data-status="mine" onclick="setRequestStatusFilter('mine')">Мои исходящие</button>
+          </div>
+          <div class="paginated-table-body">
+            <div class="table-scroll table-scroll-paged">
+              <table class="data-table" id="requests-table">
+                <thead>
+                  <tr><th>ID</th><th>Уровень</th><th>Тип</th><th>Кого / что</th><th>Кому</th><th>От кого</th><th>Статус</th><th>Отправлен</th><th>SLA</th><th></th></tr>
+                </thead>
+                <tbody id="requests-table-body"></tbody>
+              </table>
+            </div>
+            <div id="requests-pagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- КОРПОРАТИВНАЯ ПОЧТА -->
+      <section class="view" id="view-mail">
+        <div class="mail-secure-bar">
+          <span class="mail-secure-icon" aria-hidden="true">⛨</span>
+          <div class="mail-secure-text">
+            <strong>Защищённый канал ЕПСОК</strong>
+            <span class="muted" id="mail-secure-detail">4–6 уровней AES-256-GCM + HMAC · ГОСТ Р 34.12-2015 · в хранилище и по сети — только шифротекст</span>
+          </div>
+          <div class="mail-secure-meta">
+            <span class="mail-secure-pill" id="mail-channel-status">Канал активен</span>
+            <span class="mail-secure-pill mail-secure-pill-gost">ГОСТ TLS 1.3</span>
+            <span class="mail-secure-pill mail-secure-pill-layers">L1–L4 + HSM</span>
+          </div>
+        </div>
+        <div class="mail-app" id="mail-app"></div>
+      </section>
+
+      <!-- OSINT -->
+      <section class="view" id="view-osint">
+        <div class="osint-hero">
+          <div class="osint-hero-main">
+            <div class="osint-hero-badge-row">
+              <span class="badge investigating">ПОЛ-006</span>
+              <span class="osint-hero-case mono" id="osint-hero-case">—</span>
+            </div>
+            <h2 class="osint-hero-title">Открытые источники</h2>
+            <p class="osint-hero-sub muted" id="osint-hero-sub">Изолированный контур · whitelist модулей · WORM-аудит</p>
+          </div>
+          <div class="osint-kpi-strip" id="osint-kpi-strip" aria-label="Сводка OSINT"></div>
+        </div>
+
+        <div class="osint-workspace">
+          <div class="panel osint-form-panel">
+            <div id="osint-capabilities" class="osint-capabilities"></div>
+            <div class="osint-form-head">
+              <h2>Новая проверка</h2>
+              <p class="muted osint-role-hint hidden" id="osint-role-hint">Надзорный контур · просмотр результатов · запуск недоступен (ПОЛ-006)</p>
+            </div>
+            <form class="osint-form" id="osint-form" onsubmit="submitOsintScan(event)">
+              <label class="field">
+                <span>Дело</span>
+                <select id="osint-case-select" onchange="setOsintCase(this.value)"></select>
+              </label>
+              <div class="field">
+                <span>Тип цели</span>
+                <div class="osint-target-chips" id="osint-target-chips" role="group" aria-label="Быстрый выбор типа"></div>
+                <select id="osint-target-type" required onchange="onOsintTargetTypeChange()">
+                  <option value="EMAILADDR">Почта</option>
+                  <option value="PHONE_NUMBER">Телефон</option>
+                  <option value="USERNAME">Никнейм</option>
+                  <option value="HUMAN_NAME">ФИО</option>
+                  <option value="INTERNET_NAME">Домен / сайт</option>
+                  <option value="IP_ADDRESS">IP-адрес</option>
+                  <option value="INN_OGRN">ИНН / ОГРН</option>
+                  <option value="VEHICLE_PLATE">Госномер ТС</option>
+                  <option value="CRYPTO_WALLET">Криптокошелёк</option>
+                  <option value="SOCIAL_ID">Профиль соцсети</option>
+                </select>
+              </div>
+              <label class="field">
+                <span>Значение</span>
+                <input type="text" id="osint-target-value" placeholder="podozrevaemyj@mail.ru" required>
+              </label>
+              <label class="field">
+                <span>Профиль модулей</span>
+                <select id="osint-profile" required onchange="renderOsintProfileModules()"></select>
+              </label>
+              <div id="osint-profile-modules" class="osint-profile-modules" aria-live="polite"></div>
+              <div id="osint-advanced-wrap" class="osint-advanced-wrap">
+                <span class="osint-advanced-label">Расширения следственного контура</span>
+                <label class="osint-check"><input type="checkbox" id="osint-opt-cross" checked> SMEV · перекрёстные подсказки</label>
+                <label class="osint-check"><input type="checkbox" id="osint-opt-archive"> Web Archive / кэш страниц</label>
+                <label class="osint-check"><input type="checkbox" id="osint-opt-leak"> Индекс утечек (изолированный контур)</label>
+              </div>
+              <label class="field">
+                <span>Правовое основание</span>
+                <textarea id="osint-legal-basis" rows="2" required>Постановление о поручении проверки следователю №142 от 10.06.2028</textarea>
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary osint-submit-btn" id="osint-submit-btn">
+                  <span class="osint-submit-icon" aria-hidden="true">⌕</span> Запустить проверку
+                </button>
+              </div>
+            </form>
+            <p class="osint-hint muted">Не заменяет запрос в ГИАЦ/ИБД. Все действия фиксируются в журнале аудита (неизменяемая запись).</p>
+          </div>
+
+          <div class="panel osint-scans-panel">
+            <div class="osint-scans-head">
+              <div>
+                <h2>Проверки</h2>
+                <p class="muted osint-scans-sub" id="osint-scans-sub">—</p>
+              </div>
+              <label class="osint-filter-case">
+                <input type="checkbox" id="osint-filter-case" checked onchange="renderOsintScans()">
+                <span>Только по делу</span>
+              </label>
+            </div>
+            <div id="osint-scans-list" class="osint-scans-list"></div>
+          </div>
+        </div>
+
+        <div class="panel osint-findings-panel" id="osint-findings-panel" hidden>
+          <div class="panel-header osint-findings-header">
+            <div class="osint-findings-head-main">
+              <h2 id="osint-findings-title">Находки</h2>
+              <p class="muted osint-findings-sub" id="osint-findings-sub"></p>
+            </div>
+            <div class="osint-actions">
+              <button type="button" class="btn-sm" onclick="exportOsintFindingsTxt()" title="Отчёт по находкам">Отчёт (TXT)</button>
+              <button type="button" class="btn-sm" onclick="importOsintToGraph()">Импорт в граф</button>
+              <button type="button" class="btn-sm btn-primary btn-sm-inline osint-create-evidence-btn" onclick="createOsintEvidence()">Сформировать пакет</button>
+            </div>
+          </div>
+          <div class="paginated-table-body osint-table-wrap">
+            <div class="table-scroll table-scroll-paged">
+              <table class="data-table osint-findings-table" id="osint-findings-table">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" id="osint-select-all" onchange="toggleAllFindings(this.checked)" title="Выбрать все"></th>
+                    <th>Тип</th>
+                    <th>Значение</th>
+                    <th>Источник</th>
+                    <th>Уверен.</th>
+                    <th>Проверка</th>
+                    <th>Дело</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="osint-findings-body"></tbody>
+              </table>
+            </div>
+            <div id="osint-findings-pagination"></div>
+          </div>
+        </div>
+
+        <div class="panel osint-evidence-panel evidence-packages-panel" id="evidence-packages-panel">
+          <div class="panel-header osint-evidence-header">
+            <div>
+              <h2>Пакеты доказательств</h2>
+              <p class="muted osint-evidence-hint">Комплекты из открытых источников · неизменяемая запись · SHA-256</p>
+            </div>
+          </div>
+          <div id="evidence-packages-list" class="evidence-packages-grouped"></div>
+        </div>
+      </section>
+
+      <!-- HORIZON -->
+      <section class="view" id="view-horizon">
+        <div class="horizon-hero">
+          <div class="horizon-hero-main">
+            <h2 class="horizon-title">Горизонт</h2>
+            <p class="horizon-sub">Федеральный аналитический слой · без гражданской БД · ПОЛ-007</p>
+          </div>
+          <div class="horizon-hero-actions action-toolbar">
+            <div class="action-toolbar__row action-toolbar__picker">
+              <label class="field horizon-case-field">
+                <span>Дело</span>
+                <select id="horizon-case-picker" onchange="selectHorizonCase(this.value)"></select>
+              </label>
+            </div>
+            <div class="action-toolbar__row action-toolbar__actions">
+              <button type="button" class="btn-primary" id="horizon-run-btn" onclick="runHorizonSimulation()">▶ Запустить анализ модуля</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="horizon-modules-grid" id="horizon-modules-grid"></div>
+
+        <div id="horizon-collision-host"></div>
+        <div id="horizon-watch-host"></div>
+        <div class="horizon-alerts" id="horizon-alerts"></div>
+
+        <div id="horizon-module-detail"></div>
+      </section>
+
+      <!-- TECH ADMIN -->
+      <section class="view" id="view-admin">
+        <div class="admin-page">
+          <div class="admin-top-bar">
+            <div class="view-context-bar">
+              <p class="muted" id="admin-context">Контур ЦОД · ПОЛ-008 · без содержимого дел</p>
+            </div>
+            <div class="admin-kpi-strip" id="admin-kpi-strip">
+              <div class="admin-kpi"><span class="admin-kpi-val" id="admin-kpi-online">—</span><span class="admin-kpi-label" id="admin-kpi-label-online">в сети</span></div>
+              <div class="admin-kpi"><span class="admin-kpi-val" id="admin-kpi-svc">—</span><span class="admin-kpi-label" id="admin-kpi-label-svc">сервисов</span></div>
+              <div class="admin-kpi warn"><span class="admin-kpi-val" id="admin-kpi-queue">—</span><span class="admin-kpi-label" id="admin-kpi-label-queue">очередь СМЭВ</span></div>
+            </div>
+          </div>
+          <div class="admin-layout">
+            <nav class="admin-nav" id="admin-nav" role="tablist" aria-label="Разделы ЦОД"></nav>
+            <div class="admin-detail-wrap" id="admin-module-detail"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEADLINES -->
+      <section class="view" id="view-deadlines">
+        <div id="deadlines-root"></div>
+      </section>
+
+      <!-- СПРАВКА -->
+      <section class="view" id="view-help">
+        <div class="info-hero">
+          <h2>Справка по работе с ЕПСОК</h2>
+          <p class="muted">Руководство пользователя · пилотный регион · версия интерфейса 1.9.2</p>
+        </div>
+        <div class="info-layout">
+          <nav class="info-nav" aria-label="Разделы справки">
+            <button type="button" class="info-nav-item active" data-info="help-start" onclick="scrollInfo('help-start')">Начало работы</button>
+            <button type="button" class="info-nav-item" data-info="help-hotkeys" onclick="scrollInfo('help-hotkeys')">Горячие клавиши</button>
+            <button type="button" class="info-nav-item" data-info="help-security" onclick="scrollInfo('help-security')">Защита сессии</button>
+            <button type="button" class="info-nav-item" data-info="help-modules" onclick="scrollInfo('help-modules')">Модули</button>
+            <button type="button" class="info-nav-item" data-info="help-graph" onclick="scrollInfo('help-graph')">Граф связей</button>
+            <button type="button" class="info-nav-item" data-info="help-osint" onclick="scrollInfo('help-osint')">Открытые источники</button>
+            <button type="button" class="info-nav-item" data-info="help-horizon" onclick="scrollInfo('help-horizon')">Горизонт</button>
+            <button type="button" class="info-nav-item" data-info="help-faq" onclick="scrollInfo('help-faq')">Частые вопросы</button>
+          </nav>
+          <div class="info-content">
+            <article class="info-block" id="help-start">
+              <h3>Начало работы</h3>
+              <ol class="info-list">
+                <li>Войдите под учётной записью, выданной управлением ИТ ведомства. Контур (следственный / тех.) определяется ролью.</li>
+                <li>В демо-режиме бейдж <strong>Демо</strong> внизу меню открывает выбор роли по всем ведомствам каталога.</li>
+                <li>На <strong>дашборде</strong> — сводка по делам, срокам, межведомственным запросам и сигналам «Горизонт».</li>
+                <li>Откройте <strong>реестр дел</strong> — фильтр по региону, отделу и ведомству.</li>
+                <li>Откройте <strong>карточку дела</strong> для хронологии, участников и смежных дел.</li>
+                <li>Создавайте <strong>запросы данных</strong> — межведомственные (СМЭВ), внутри ведомства (ГИАЦ, ЦЭК) или внутри отдела (ОУР, руководитель) — только с правовым основанием.</li>
+                <li>Все действия фиксируются в <strong>журнале аудита</strong> (неизменяемая запись).</li>
+              </ol>
+              <div class="info-callout">
+                <strong>Важно:</strong> массовый просмотр персональных данных запрещён (ПОЛ-005). При превышении лимита сессия блокируется.
+              </div>
+            </article>
+            <article class="info-block" id="help-hotkeys">
+              <h3>Горячие клавиши</h3>
+              <table class="data-table info-table shortcuts-table">
+                <thead><tr><th>Клавиши</th><th>Действие</th></tr></thead>
+                <tbody>
+                  <tr><td><kbd>Ctrl+K</kbd> или <kbd>/</kbd></td><td>Глобальный поиск (дела, запросы, фигуранты)</td></tr>
+                  <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></td><td>Навигация по результатам поиска</td></tr>
+                  <tr><td><kbd>?</kbd></td><td>Эта шпаргалка (вне полей ввода)</td></tr>
+                  <tr><td><kbd>Ctrl+Shift+L</kbd></td><td>Быстрая блокировка сессии</td></tr>
+                  <tr><td><kbd>Esc</kbd></td><td>Закрыть поиск, уведомления, модальные окна</td></tr>
+                  <tr><td>Alt+клик ×2 на графе</td><td>Найти путь между двумя узлами</td></tr>
+                </tbody>
+              </table>
+              <p class="muted">В пустом поиске — недавние дела и быстрый переход по разделам.</p>
+            </article>
+            <article class="info-block" id="help-security">
+              <h3>Защита сессии</h3>
+              <ul class="info-list">
+                <li><strong>Блокировка</strong> — меню пользователя → «Заблокировать» или <kbd>Ctrl+Shift+L</kbd>. Сессия очищается, экран входа возвращается без выхода из внешнего шлюза хостинга.</li>
+                <li><strong>Автоблокировка</strong> — через 15 минут бездействия; предупреждение за 60 секунд. Индикатор ⏱ в шапке показывает оставшееся время.</li>
+                <li><strong>Журнал аудита</strong> — блокировка, автоблокировка и выход фиксируются с пометкой ПОЛ-005 (тех. админ → ЦОД → журнал).</li>
+                <li><strong>Диагностика</strong> — раздел «Поддержка» → «Собрать диагностику»: снимок окружения без паролей для обращения в ЦОД.</li>
+              </ul>
+            </article>
+            <article class="info-block" id="help-modules">
+              <h3>Описание модулей</h3>
+              <table class="data-table info-table">
+                <thead><tr><th>Модуль</th><th>Назначение</th><th>Кто использует</th></tr></thead>
+                <tbody>
+                  <tr><td>Реестр дел</td><td>Список дел с фильтрами по региону, отделу, ведомству</td><td>Следователь, руководитель</td></tr>
+                  <tr><td>Карточка дела</td><td>Хронология, участники, смежные дела, экспорт справки (ПОЛ-004)</td><td>Следователь, руководитель; межвед. просмотр — ПОЛ-001</td></tr>
+                  <tr><td>Граф связей</td><td>Визуализация связей лиц, счетов, дел, организаций</td><td>Следователь, аналитик</td></tr>
+                  <tr><td>Личное дело</td><td>Служебные данные и заявки на перевод</td><td>Клик по блоку пользователя внизу меню</td></tr>
+                  <tr><td>Сотрудники</td><td>Состав отдела, согласования, учётные записи</td><td>Руководитель, тех. админ</td></tr>
+                  <tr><td>Дела фигурантов</td><td>Личные дела подозреваемых, редактирование</td><td>Следователь, прокурор (просмотр)</td></tr>
+                  <tr><td>Запросы</td><td>Межвед, внутри ведомства, внутри отдела; выгрузка результата (ПОЛ-003)</td><td>Инициатор → исполнитель</td></tr>
+                  <tr><td>Ведомства</td><td>Куда направить запрос</td><td>По роли — см. матрицу в регламентах</td></tr>
+                  <tr><td>Открытые источники</td><td>Проверка публичных данных (не заменяет ГИАЦ)</td><td>Следователь МВД, СК, ФСБ, Росгвардия, ФТС, оперуполномоченный (ПОЛ-006)</td></tr>
+                  <tr><td>Горизонт</td><td>Федеральные совпадения без гражданской БД</td><td>Руководитель СО, прокурор, следователь СК (пилот)</td></tr>
+                  <tr><td>Сроки УПК</td><td>Контроль процессуальных сроков</td><td>Следователь, прокурор</td></tr>
+                  <tr><td>Тех. админ</td><td>Сервисы, интеграции, журнал аудита, сбор открытых источников — без содержимого дел</td><td>Тех. администратор ЦОД</td></tr>
+                </tbody>
+              </table>
+            </article>
+            <article class="info-block" id="help-graph">
+              <h3>Граф связей — управление</h3>
+              <ul class="info-list">
+                <li><strong>Колесо мыши</strong> — масштаб</li>
+                <li><strong>Перетаскивание фона</strong> — панорама</li>
+                <li><strong>Клик по узлу</strong> — карточка узла справа</li>
+                <li><strong>Shift + перетаскивание узла</strong> — закрепить позицию</li>
+                <li><strong>Двойной клик по узлу</strong> — открепить</li>
+                <li>Кнопки <strong>+ / − / ◎ / ↻</strong> — увеличить, уменьшить, вписать в экран, пересчитать раскладку</li>
+              </ul>
+              <p class="muted">Импорт из «Открытых источников»: выберите находки → «Импорт в граф». Система разделяет по делам и объединяет дубликаты. ФИО требуют ручного подтверждения.</p>
+            </article>
+            <article class="info-block" id="help-osint">
+              <h3>Открытые источники</h3>
+              <p>Перед запуском проверки укажите:</p>
+              <ul class="info-list">
+                <li>тип и значение цели (почта, телефон, никнейм, ФИО, домен);</li>
+                <li>профиль модулей (пассивный / расширенный / углублённый);</li>
+                <li>правовое основание — постановление или поручение (ПОЛ-006).</li>
+              </ul>
+              <p>Результаты не заменяют официальный запрос в ГИАЦ, ИБД или банк данных МВД. Исполнительный сервис работает в изолированном контуре.</p>
+            </article>
+            <article class="info-block" id="help-horizon">
+              <h3>Горизонт</h3>
+              <p><strong>Горизонт</strong> — федеральный аналитический слой ЕПСОК для поиска совпадений и скрытых связей между делами <strong>без единой гражданской базы данных</strong>. Система сравнивает обезличенные паттерны (хеши телефонов, счетов, ФИО и др.) только по активным делам в пилотных регионах. Раскрытие персональных данных — только через межведомственный запрос с правовым основанием (ПОЛ-007).</p>
+              <p>Модуль доступен из бокового меню <strong>Аналитика → Горизонт</strong>, с дашборда и карточки дела (для дел с кластером или смежными делами). Выберите дело, откройте нужный аналитический модуль и запустите анализ.</p>
+              <table class="data-table info-table">
+                <thead><tr><th>Модуль</th><th>Назначение</th><th>Типичное действие</th></tr></thead>
+                <tbody>
+                  <tr><td>SE · Движок совпадений</td><td>Автоматическое обнаружение федеральных совпадений между делами (индекс Bloom-фильтров)</td><td>Запросить раскрытие смежного дела</td></tr>
+                  <tr><td>GLD · Детектор скрытых связей</td><td>Поиск скрытых цепочек через промежуточные узлы (номиналы, счета, организации)</td><td>Создать межвед. запрос для подтверждения пути</td></tr>
+                  <tr><td>TCR · Временные пересечения</td><td>Хронология пересечений субъектов на уже полученных по делу данных</td><td>Обновить ленту событий</td></tr>
+                  <tr><td>MORM · Совпадение с кластером</td><td>Сходство схемы дела с обезличенными федеральными шаблонами modus operandi</td><td>Пересчитать индекс сходства</td></tr>
+                  <tr><td>IDT · Цифровой двойник</td><td>Симуляция «что будет, если» — оценка эффекта межвед. запросов до отправки</td><td>Симулировать сценарии запросов</td></tr>
+                  <tr><td>PRO · Прогноз запросов</td><td>Ранжирование рекомендуемых легальных шагов (тип запроса, ведомство, ожидаемый результат)</td><td>Создать запрос по рекомендации</td></tr>
+                  <tr><td>FIR · Федеративная идентификация</td><td>Гипотеза «тот же субъект» по контрольной сумме ФИО без центральной базы</td><td>Подтвердить, отклонить или запросить ГИАЦ</td></tr>
+                </tbody>
+              </table>
+              <ul class="info-list">
+                <li>Сигналы и совпадения отображаются в ленте оповещений; из рекомендаций можно сразу создать черновик межвед. запроса.</li>
+                <li>Модуль <strong>не заменяет</strong> ГИАЦ, ИБД и официальные ведомственные базы — формирует гипотезы для следователя.</li>
+                <li>Доступ: руководитель СО, прокурор, следователь СК, аналитик (пилотные регионы — Краснодарский край, Москва, Татарстан).</li>
+              </ul>
+              <div class="info-callout">
+                <strong>Важно:</strong> раскрытие данных смежного дела требует согласования рабочих групп или прокурорского акта. Все действия фиксируются в журнале аудита.
+              </div>
+            </article>
+            <article class="info-block" id="help-faq">
+              <h3>Частые вопросы</h3>
+              <dl class="info-faq">
+                <dt>Почему не отправляется запрос?</dt>
+                <dd>Проверьте уровень (межвед / ведомство / отдел), правовое основание и полномочия (вкладка «Ведомства»).</dd>
+                <dt>Не вижу модуль «Горизонт»</dt>
+                <dd>Модуль включён для пилотных регионов. Обратитесь к ответственному за регион по ПОЛ-014.</dd>
+                <dt>Как сменить роль в демо?</dt>
+                <dd>Бейдж <strong>Демо</strong> внизу бокового меню — выбор персоны по всем ведомствам (руководитель / подчинённый). В продуктиве роль назначает управление ИТ.</dd>
+                <dt>Куда обращаться при ошибке?</dt>
+                <dd>Раздел <a href="#" onclick="showUtilView('support'); return false;">Поддержка</a> — форма обращения или телефон ЦОД.</dd>
+              </dl>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- РЕГЛАМЕНТЫ -->
+      <section class="view" id="view-regulations">
+        <div class="info-hero reg-hero-bar">
+          <div class="reg-hero-main">
+            <h2>Регламенты</h2>
+            <p class="muted">Политики доступа, порядок работы и нормативная база ЕПСОК</p>
+          </div>
+          <div class="reg-kpi-strip">
+            <div class="reg-kpi"><span class="reg-kpi-val">10</span><span class="reg-kpi-label">политик ПОЛ</span></div>
+            <div class="reg-kpi"><span class="reg-kpi-val" id="reg-kpi-laws">—</span><span class="reg-kpi-label">нормативных актов</span></div>
+            <div class="reg-kpi"><span class="reg-kpi-val">15</span><span class="reg-kpi-label">ведомств в каталоге</span></div>
+            <div class="reg-kpi accent"><span class="reg-kpi-val">НЗАП</span><span class="reg-kpi-label">журнал аудита</span></div>
+          </div>
+        </div>
+
+        <div class="reg-layout">
+          <nav class="reg-nav" role="tablist" aria-label="Разделы регламентов">
+            <button type="button" class="reg-nav-item active" data-reg="policies" onclick="showRegTab('policies')">
+              <span class="reg-nav-icon">ПОЛ</span>
+              <span class="reg-nav-text">Политики доступа</span>
+            </button>
+            <button type="button" class="reg-nav-item" data-reg="work" onclick="showRegTab('work')">
+              <span class="reg-nav-icon">↻</span>
+              <span class="reg-nav-text">Порядок работы</span>
+            </button>
+            <button type="button" class="reg-nav-item" data-reg="laws" onclick="showRegTab('laws')">
+              <span class="reg-nav-icon">ФЗ</span>
+              <span class="reg-nav-text">Нормативная база</span>
+            </button>
+            <button type="button" class="reg-nav-item" data-reg="roles" onclick="showRegTab('roles')">
+              <span class="reg-nav-icon">RB</span>
+              <span class="reg-nav-text">Матрица ролей</span>
+            </button>
+          </nav>
+
+          <div class="reg-content">
+            <div class="reg-pane active" id="reg-pane-policies">
+              <div class="reg-pane-head">
+                <h3>Политики доступа</h3>
+                <p class="muted reg-policy-intro"><strong>ПОЛ</strong> — политика доступа ЕПСОК: правило «кто что может делать» в системе. Код (например, <span class="reg-code reg-code-inline">ПОЛ-001</span>) указывается в журнале аудита и уведомлениях. Нажмите на карточку — откроется пояснение простым языком.</p>
+              </div>
+              <div id="reg-policy-grid" class="reg-policy-groups" aria-live="polite"></div>
+              <div class="reg-callout">
+                <strong>Важно:</strong> в демо переключение ролей имитирует разные контуры. В продуктиве политики применяются автоматически по учётной записи.
+              </div>
+            </div>
+
+            <div class="reg-pane" id="reg-pane-work">
+              <div class="reg-pane-head">
+                <h3>Порядок работы</h3>
+                <p class="muted">Типовые сценарии обмена: межвед, внутри ведомства, внутри отдела</p>
+              </div>
+              <div class="reg-work-grid">
+                <div class="panel reg-work-panel">
+                  <h4 class="reg-pane-title">Межведомственные запросы</h4>
+                  <div class="reg-flow">
+                    <div class="reg-flow-step"><span class="reg-flow-num">1</span><div><strong>Ведомство и тип</strong><span class="muted">Привязка к ФЗ и полномочиям</span></div></div>
+                    <div class="reg-flow-arrow">→</div>
+                    <div class="reg-flow-step"><span class="reg-flow-num">2</span><div><strong>Правовое основание</strong><span class="muted">Постановление, определение</span></div></div>
+                    <div class="reg-flow-arrow">→</div>
+                    <div class="reg-flow-step"><span class="reg-flow-num">3</span><div><strong>Ответ в дело</strong><span class="muted">Карточка + граф связей</span></div></div>
+                  </div>
+                  <ul class="reg-brief">
+                    <li>Канал СМЭВ · SLA исполнителя — от 4 ч до 3 раб. дней</li>
+                    <li>Статус отслеживается в модуле «Запросы» и на дашборде исполнителя</li>
+                  </ul>
+                </div>
+                <div class="panel reg-work-panel">
+                  <h4 class="reg-pane-title">Внутри ведомства и отдела</h4>
+                  <ul class="reg-checklist">
+                    <li><span class="reg-check">◎</span> <strong>Внутри ведомства</strong> — ГИАЦ, ЦЭК, смежное СО, управление ОРД (без выхода в СМЭВ)</li>
+                    <li><span class="reg-check">◎</span> <strong>Внутри отдела</strong> — ОУР, руководитель, опергруппа, согласование следственных действий</li>
+                    <li><span class="reg-check">✓</span> Срок ответа — до 1 раб. дня (ведомство) / до 4 ч (отдел)</li>
+                    <li><span class="reg-check">✓</span> Журнал аудита фиксирует уровень запроса и основание</li>
+                  </ul>
+                </div>
+                <div class="panel reg-work-panel">
+                  <h4 class="reg-pane-title">Журнал и хранение</h4>
+                  <ul class="reg-checklist">
+                    <li><span class="reg-check">✓</span> Все действия — в журнале аудита (неизменяемая запись)</li>
+                    <li><span class="reg-check">✓</span> Данные открытых источников — по сроку региона</li>
+                    <li><span class="reg-check">✓</span> Персональные данные — шифрование at-rest, TLS in-transit</li>
+                    <li><span class="reg-check">✓</span> Экспорт — только с ПОЛ-004 и записью в журнал</li>
+                  </ul>
+                  <div class="reg-mini-stats">
+                    <div><span class="reg-mini-val">7 лет</span><span>хранение аудита</span></div>
+                    <div><span class="reg-mini-val">90 дн.</span><span>кэш открытых источников (пилот)</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="reg-pane" id="reg-pane-laws">
+              <div class="reg-pane-head reg-laws-head">
+                <div>
+                  <h3>Нормативная база</h3>
+                  <p class="muted">Кодексы, федеральные законы и подзаконные акты — правовое основание запросов, доступов и модулей ЕПСОК</p>
+                </div>
+                <p class="reg-laws-stats muted" id="reg-laws-stats" aria-live="polite">—</p>
+              </div>
+              <div class="reg-callout reg-laws-disclaimer">
+                <strong>Демо-справочник, не юридическая база.</strong> Полная законодательная база РФ (включая КонсультантПлюс) защищена авторским правом и лицензией — автоматический импорт в демо невозможен и не выполняется. Ниже — краткие описания актов, релевантных ЕПСОК, со ссылками на <a href="https://pravo.gov.ru/" target="_blank" rel="noopener noreferrer">pravo.gov.ru</a> и поиск в <a href="https://www.consultant.ru/" target="_blank" rel="noopener noreferrer">КонсультантПлюс</a>. Пояснения к статьям — только для просмотра.
+              </div>
+              <div class="reg-laws-toolbar">
+                <label class="reg-laws-search">
+                  <span class="reg-laws-search-icon" aria-hidden="true">⌕</span>
+                  <input type="search" id="reg-laws-search" placeholder="Поиск: код, название, статья, ведомство, модуль…" autocomplete="off" oninput="renderLegalBase()">
+                </label>
+                <div class="reg-laws-filters">
+                  <label class="reg-laws-filter">
+                    <span>Тип</span>
+                    <select id="reg-laws-type" onchange="renderLegalBase()">
+                      <option value="">Все типы</option>
+                    </select>
+                  </label>
+                  <label class="reg-laws-filter">
+                    <span>Ведомство</span>
+                    <select id="reg-laws-agency" onchange="renderLegalBase()">
+                      <option value="">Все ведомства</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="reg-laws-sync-bar" id="reg-laws-sync-bar">
+                <p class="reg-laws-sync-status muted" id="reg-laws-sync-status" aria-live="polite">—</p>
+                <button type="button" class="btn-sm" id="reg-laws-sync-btn" onclick="runLegislationSyncManual()">Проверить обновления</button>
+              </div>
+              <div class="reg-laws-sync-banner hidden" id="reg-laws-sync-banner" role="status" aria-live="polite"></div>
+              <div class="legislation-impact-banner hidden" id="reg-laws-impact-banner" role="alert" aria-live="polite"></div>
+              <details class="reg-laws-changelog" id="reg-laws-changelog-wrap">
+                <summary>Журнал обновлений законодательства</summary>
+                <ul class="reg-laws-changelog-list" id="reg-laws-changelog"></ul>
+              </details>
+              <div class="reg-laws-categories" id="reg-laws-categories" role="group" aria-label="Разделы законодательства"></div>
+              <div id="reg-laws-results" class="reg-laws-results"></div>
+            </div>
+
+            <div class="reg-pane" id="reg-pane-roles">
+              <div class="reg-pane-head">
+                <h3>Матрица ролей</h3>
+                <p class="muted">Какие модули доступны каждому контуру (упрощённо для пилота)</p>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table reg-matrix">
+                  <thead>
+                    <tr><th>Контур</th><th>Дела</th><th>Граф</th><th>Запросы</th><th>Откр. источники</th><th>Горизонт</th><th>Экспорт</th><th>ЦОД / ИТ</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Следователь МВД / Росгвардия / ФТС</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-partial">◐</td><td class="reg-no">—</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Следователь СК РФ</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-partial">◐</td><td class="reg-partial">◐</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Следователь ФСБ</td><td class="reg-partial">◐</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-partial">◐</td><td class="reg-no">—</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Оперуполномоченный</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-no">—</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Руководитель СО</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-yes">●</td><td class="reg-no">—</td></tr>
+                    <tr><td>Прокурор</td><td class="reg-partial">◐</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-yes">●</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Военный прокурор</td><td class="reg-partial">◐</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Исполнитель (ФНС, ФССП, ФСИН, ГИАЦ…)</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-yes">●</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Секретарь суда</td><td class="reg-partial">◐</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td></tr>
+                    <tr><td>Аналитик</td><td class="reg-partial">◐</td><td class="reg-yes">●</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-yes">●</td><td class="reg-partial">◐</td><td class="reg-no">—</td></tr>
+                    <tr><td>Управление ИТ</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-yes">●</td><td class="reg-partial">◐</td></tr>
+                    <tr><td>Тех. админ ЦОД</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-no">—</td><td class="reg-yes">●</td><td class="reg-yes">●</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <ul class="reg-matrix-legend muted">
+                <li><span class="reg-yes" aria-hidden="true">●</span> <strong>Полный доступ</strong> — все функции модуля доступны</li>
+                <li><span class="reg-partial" aria-hidden="true">◐</span> <strong>Частичный доступ</strong> — только ваш регион, межвед. просмотр (ПОЛ-001) или выгрузка по ПОЛ-004</li>
+                <li><span class="reg-no" aria-hidden="true">—</span> <strong>Нет доступа</strong> — модуль для этой роли недоступен; можно подать заявку (ПОЛ-011)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ПОДДЕРЖКА -->
+      <section class="view" id="view-support">
+        <div class="info-hero">
+          <h2>Техническая поддержка</h2>
+          <p class="muted">ЦОД ЕПСОК · Минцифры России · пилотный регион</p>
+        </div>
+        <div class="grid-2 support-layout">
+          <div class="panel">
+            <h3>Контакты</h3>
+            <div class="support-contacts">
+              <div class="support-contact-item">
+                <span class="support-contact-label">Единый номер</span>
+                <a href="tel:+78001007080" class="support-contact-link">8 800 100-70-80</a>
+                <span class="muted support-contact-note">бесплатно · круглосуточно</span>
+              </div>
+              <div class="support-contact-item">
+                <span class="support-contact-label">Эл. почта</span>
+                <a href="mailto:support@epsok.gov.ru" class="support-contact-link">support@epsok.gov.ru</a>
+                <button type="button" class="support-mail-btn" onclick="openCorpMailTo('support@epsok.gov.ru','Обращение в поддержку')">Написать в защищённую почту</button>
+              </div>
+              <div class="support-contact-item">
+                <span class="support-contact-label">СМЭВ / интеграции</span>
+                <a href="mailto:integration@epsok.gov.ru" class="support-contact-link">integration@epsok.gov.ru</a>
+                <button type="button" class="support-mail-btn" onclick="openCorpMailTo('integration@epsok.gov.ru','Интеграция СМЭВ')">Написать в защищённую почту</button>
+              </div>
+              <div class="support-contact-item">
+                <span class="support-contact-label">Время реакции</span>
+                <ul class="support-sla-list">
+                  <li><span class="support-sla-priority">Критично</span><span class="support-sla-time">1 ч</span></li>
+                  <li><span class="support-sla-priority">Высокий</span><span class="support-sla-time">4 ч</span></li>
+                  <li><span class="support-sla-priority">Обычный</span><span class="support-sla-time">1 раб. день</span></li>
+                </ul>
+              </div>
+            </div>
+            <h3 style="margin-top:1.5rem">Что указать в обращении</h3>
+            <ul class="info-list">
+              <li>ФИО и ведомство</li>
+              <li>Номер дела (если применимо)</li>
+              <li>Модуль и действие (скриншот при возможности)</li>
+              <li>Время возникновения ошибки</li>
+              <li>Код из уведомления (если есть)</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Создать обращение</h3>
+            <form class="support-form" id="support-form" onsubmit="submitSupportTicket(event)">
+              <label class="field">
+                <span>Категория</span>
+                <select id="support-category" required>
+                  <option value="access">Доступ и учётная запись</option>
+                  <option value="smev">СМЭВ / межведомственные запросы</option>
+                  <option value="graph">Граф связей</option>
+                  <option value="osint">Открытые источники</option>
+                  <option value="horizon">Горизонт</option>
+                  <option value="performance">Медленная работа / сбой</option>
+                  <option value="other">Другое</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Приоритет</span>
+                <select id="support-priority" required onchange="updateSupportSlaHint()">
+                  <option value="normal">Обычный</option>
+                  <option value="high">Высокий — мешает расследованию</option>
+                  <option value="critical">Критичный — система недоступна</option>
+                </select>
+              </label>
+              <p class="support-sla-hint muted" id="support-sla-hint">Ожидаемое время реакции: 1 раб. день</p>
+              <label class="field">
+                <span>Тема</span>
+                <input type="text" id="support-subject" placeholder="Кратко опишите проблему" required maxlength="120">
+              </label>
+              <label class="field">
+                <span>Описание</span>
+                <textarea id="support-body" rows="5" placeholder="Шаги воспроизведения, сообщения об ошибках…" required></textarea>
+              </label>
+              <label class="field">
+                <span>Контакт для ответа</span>
+                <input type="text" id="support-contact" placeholder="Телефон или внутренний email" required>
+              </label>
+              <div class="form-actions">
+                <button type="button" class="btn-sm" onclick="collectDiagnosticsAndCopy()" title="Скопировать данные для техподдержки">Собрать диагностику</button>
+                <button type="submit" class="btn-primary">Отправить обращение</button>
+              </div>
+            </form>
+            <p class="muted support-form-note">Номер обращения придёт на указанный контакт. Статус — в журнале ниже.</p>
+          </div>
+          <div class="panel" style="margin-top:1rem">
+            <div class="panel-header support-history-head">
+              <h3>Мои обращения</h3>
+              <button type="button" class="btn-sm" onclick="exportSupportTicketsCsv()">Экспорт CSV</button>
+            </div>
+            <div id="support-ticket-history"><p class="muted">Обращений пока нет.</p></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:1.5rem">
+          <h3>Известные ограничения пилота</h3>
+          <ul class="info-list">
+            <li>Модули «Горизонт» и «Открытые источники» — только Краснодарский край, Москва, Татарстан.</li>
+            <li>Адаптер РФМ — повышенная очередь (до 28 запросов), срок ответа до 2 рабочих дней.</li>
+            <li>Плановое обслуживание: 22.06.2028 01:00–03:00 МСК — возможны кратковременные перерывы.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="privacy-veil" id="privacy-veil" hidden aria-hidden="true" inert></div>
+  <div class="toast" id="toast"></div>
+  <div class="modal-overlay idle-warning-overlay hidden" id="idle-warning" role="alertdialog" aria-labelledby="idle-warning-title" aria-describedby="idle-warning-desc">
+    <div class="modal-panel idle-warning-panel" onclick="event.stopPropagation()">
+      <h3 id="idle-warning-title">Сессия скоро будет заблокирована</h3>
+      <p id="idle-warning-desc" class="muted modal-hint">Нет активности более 14 минут. Через <strong id="idle-warning-countdown">60</strong> с интерфейс будет заблокирован (ПОЛ-005).</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" onclick="dismissIdleWarning()">Продолжить работу</button>
+        <button type="button" class="btn-sm" onclick="lockNow()">Заблокировать сейчас</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="shortcuts-modal" role="dialog" aria-labelledby="shortcuts-modal-title">
+    <div class="modal-panel shortcuts-panel" onclick="event.stopPropagation()">
+      <h3 id="shortcuts-modal-title">Горячие клавиши</h3>
+      <table class="data-table shortcuts-table">
+        <tbody>
+          <tr><td><kbd>Ctrl+K</kbd> / <kbd>/</kbd></td><td>Глобальный поиск</td></tr>
+          <tr><td><kbd>g</kbd> затем <kbd>c</kbd> / <kbd>r</kbd> / <kbd>d</kbd> / <kbd>a</kbd> / <kbd>m</kbd></td><td>Дела · Запросы · Сроки · Ведомства · Почта</td></tr>
+          <tr><td><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></td><td>Выбор в поиске</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Эта шпаргалка</td></tr>
+          <tr><td><kbd>Ctrl+Shift+L</kbd></td><td>Заблокировать сессию</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Закрыть панели и модалки</td></tr>
+          <tr><td>Alt+клик ×2</td><td>Путь на графе между узлами</td></tr>
+        </tbody>
+      </table>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeShortcutsModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="demo-role-modal">
+    <div class="modal-panel demo-role-panel" onclick="event.stopPropagation()">
+      <div class="demo-role-head">
+        <h3>Демо: выбор роли</h3>
+        <p class="muted modal-hint">Меню и доступ к разделам зависят от должности</p>
+      </div>
+      <div id="demo-persona-groups" class="demo-persona-groups"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeDemoRoleModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="request-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3 id="request-modal-title">Новый запрос</h3>
+      <p class="muted modal-hint" id="req-channel-hint">Канал: СМЭВ</p>
+      <label class="field">
+        <span>Уровень запроса</span>
+        <select id="req-scope" onchange="updateRequestScopeFields()">
+          <option value="interagency">Межведомственный (СМЭВ)</option>
+          <option value="intra_agency">Внутри ведомства</option>
+          <option value="intra_department">Внутри отдела / подразделения</option>
+        </select>
+      </label>
+      <div class="req-scope-field" data-scope="interagency">
+        <label class="field">
+          <span>Ведомство-исполнитель</span>
+          <select id="req-agency" onchange="onInteragencyAgencyChange()"></select>
+        </label>
+      </div>
+      <p class="muted modal-hint req-scope-field" data-scope="interagency" id="req-interagency-region-hint"></p>
+      <div class="req-scope-field" data-scope="interagency">
+        <label class="field">
+          <span>Район</span>
+          <select id="req-district" onchange="updateInteragencyDepartmentOptions()"></select>
+        </label>
+      </div>
+      <div class="req-scope-field" data-scope="interagency">
+        <label class="field">
+          <span>Отдел</span>
+          <select id="req-target-dept"></select>
+        </label>
+      </div>
+      <div class="req-scope-field hidden" data-scope="intra_agency">
+        <label class="field">
+          <span>Ваше ведомство</span>
+          <input type="text" id="req-agency-from" readonly>
+        </label>
+      </div>
+      <div class="req-scope-field hidden" data-scope="intra_department">
+        <label class="field">
+          <span>Ваш отдел</span>
+          <input type="text" id="req-dept-from" readonly>
+        </label>
+      </div>
+      <div class="req-scope-field hidden" data-scope="intra_agency intra_department">
+        <label class="field">
+          <span id="req-target-label">Подразделение-исполнитель</span>
+          <select id="req-target"></select>
+        </label>
+      </div>
+      <label class="field req-scope-field" data-scope="interagency intra_agency intra_department" id="req-template-wrap">
+        <span>Шаблон по статье дела</span>
+        <select id="req-article-template" onchange="applyRequestArticleTemplate()">
+          <option value="">— выберите шаблон —</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Тип запроса</span>
+        <select id="req-type" onchange="updateRequestLawRef()"></select>
+      </label>
+      <label class="field">
+        <span>Кого / что запрашивается</span>
+        <input type="text" id="req-subject" placeholder="ФИО, ИНН, счёт, объект, номер дела…" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>Правовое основание</span>
+        <input type="text" id="req-legal" placeholder="Постановление №… от …" value="Постановление №412 от 01.06.2028">
+      </label>
+      <p class="req-law-ref muted" id="req-law-ref"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeRequestModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" id="req-submit-btn" onclick="submitNewRequest()">Далее: симуляция →</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="request-simulate-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3>Симуляция запроса (IDT-lite)</h3>
+      <p class="muted modal-hint">Прогноз последствий до отправки в СМЭВ / контур ведомства</p>
+      <div id="request-simulate-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeRequestSimulateModal()">Назад</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="confirmRequestAfterSimulation()">Отправить запрос</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="access-request-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3 id="access-request-title">Запрос доступа</h3>
+      <p class="muted modal-hint" id="access-request-hint">Укажите правовое или служебное основание — заявка уйдёт руководителю и в журнал аудита.</p>
+      <label class="field hidden" id="access-request-feature-wrap">
+        <span>Модуль / функция</span>
+        <select id="access-request-feature-select"></select>
+      </label>
+      <label class="field" id="access-request-feature-readonly-wrap">
+        <span>Модуль / функция</span>
+        <input type="text" id="access-request-feature" readonly>
+      </label>
+      <label class="field">
+        <span>Основание запроса</span>
+        <select id="access-request-basis-type">
+          <option value="order">Постановление / поручение руководителя</option>
+          <option value="case">Связь с делом ЕПСОК</option>
+          <option value="law">Норма закона / регламент (ПОЛ)</option>
+          <option value="pilot">Подключение к пилоту / кластеру</option>
+          <option value="other">Иное служебное основание</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Обоснование</span>
+        <textarea id="access-request-basis" rows="4" placeholder="Например: дело ЕПСОК-2028-004521 · необходим модуль «Горизонт» для поиска межрегиональных связей по кластеру МВ-2847"></textarea>
+      </label>
+      <label class="field">
+        <span>Срок / контекст (необязательно)</span>
+        <input type="text" id="access-request-context" placeholder="Дело, регион, срок расследования">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeAccessRequestModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="submitAccessRequest()">Отправить заявку</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="request-fulfill-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3 id="request-fulfill-title">Предоставить результат</h3>
+      <p class="muted modal-hint" id="request-fulfill-hint">—</p>
+      <label class="field">
+        <span>Текст ответа / результат</span>
+        <textarea id="request-fulfill-result" rows="5" placeholder="Выписка, справка, заключение, ссылка на пакет в ЕПСОК…"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeRequestFulfillModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="submitRequestResultAsync()">Направить инициатору</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="request-result-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3 id="request-result-title">Результат запроса</h3>
+      <p class="muted modal-hint" id="request-result-meta">—</p>
+      <div class="request-result-body" id="request-result-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" id="request-result-download" onclick="downloadRequestResult(activeRequestResultId)">Скачать TXT</button>
+        <button type="button" class="btn-sm" onclick="closeRequestResultModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="case-team-modal">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <h3>Изменить состав рабочей группы</h3>
+      <p class="muted modal-hint">Добавление участника · ПОЛ-001 · сотрудники вашего ведомства и региона</p>
+      <input type="hidden" id="case-team-modal-case-id" value="">
+      <label class="field">
+        <span>Сотрудник</span>
+        <select id="case-team-add-person"></select>
+      </label>
+      <label class="field">
+        <span>Роль в деле</span>
+        <select id="case-team-add-role"></select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeCaseTeamAddModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="submitCaseTeamAdd()">Добавить в состав</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="hr-request-modal">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <h3 id="hr-request-modal-title">Кадровая заявка</h3>
+      <p class="muted modal-hint hr-request-hint">Заявка не изменяет звание и должность автоматически. После подачи — согласование руководителем и кадрами ведомства (ПОЛ-009).</p>
+      <label class="field">
+        <span>Тип заявки</span>
+        <select id="hr-req-type" onchange="updateHrRequestFields()">
+          <option value="promotion">Заявка · повышение звания</option>
+          <option value="transfer_dept">Заявка · перевод в отдел</option>
+          <option value="transfer_region">Заявка · перевод в регион</option>
+          <option value="transfer_agency">Заявка · перевод в ведомство</option>
+        </select>
+      </label>
+      <div id="hr-req-fields"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeHrRequestModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="confirmHrRequest()">Подать заявку</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="osint-import-modal">
+    <div class="modal-panel osint-import-panel" onclick="event.stopPropagation()">
+      <h3>Импорт в граф связей</h3>
+      <p class="muted modal-hint">Система определит дело по проверке, совпадению с графом и типу данных. Дубликаты объединяются автоматически.</p>
+      <label class="field">
+        <span>Режим импорта</span>
+        <select id="osint-import-case">
+          <option value="auto">Авто — разделить по делам</option>
+        </select>
+      </label>
+      <div id="osint-import-preview" class="osint-import-preview"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeOsintImportModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="confirmOsintImport()">Импортировать</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="mail-compose-modal">
+    <div class="modal-panel mail-compose-panel" onclick="event.stopPropagation()">
+      <h3>Новое защищённое сообщение</h3>
+      <p class="muted modal-hint">Текст шифруется на вашем ГОСТ-токене до отправки. По сети и в хранилище — только шифротекст.</p>
+      <form id="mail-compose-form" onsubmit="submitCorpMailSend(event)">
+        <label class="field">
+          <span>Кому</span>
+          <input type="text" id="mail-compose-to" list="mail-addressbook" required placeholder="morozova.ea@epsok.gov.ru" oninput="updateMailComposeCryptoPreview()">
+          <datalist id="mail-addressbook"></datalist>
+        </label>
+        <label class="field">
+          <span>Тема</span>
+          <input type="text" id="mail-compose-subject" required placeholder="Тема сообщения">
+        </label>
+        <label class="field" id="mail-compose-classification-field">
+          <span>Гриф и уровень шифрования</span>
+          <select id="mail-compose-classification" onchange="updateMailComposeCryptoPreview()">
+            <option value="standard">Стандарт · 4 уровня (L1–L3 + HMAC)</option>
+            <option value="official">Служебное · 5 уровней (+ контур региона)</option>
+            <option value="restricted">ДСП · 6 уровней (+ ведомство и регион)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Сообщение</span>
+          <textarea id="mail-compose-body" rows="5" required placeholder="Текст виден только получателю после расшифровки…" oninput="updateMailComposeCryptoPreview()"></textarea>
+        </label>
+        <label class="field mail-compose-case-field" id="mail-compose-case-field">
+          <span><input type="checkbox" id="mail-compose-case-link"> Привязать к делу <code id="mail-compose-case-label">—</code></span>
+        </label>
+        <div class="mail-compose-crypto hidden" id="mail-compose-crypto-preview"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-sm" onclick="closeMailCompose()">Отмена</button>
+          <button type="submit" class="btn-primary btn-sm-inline" id="mail-compose-submit">⛨ Зашифровать и отправить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="new-case-modal">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <h3>Новое уголовное дело</h3>
+      <p class="muted modal-hint">При регистрации автоматически создаётся граф связей с первичными узлами.</p>
+      <form id="new-case-form" onsubmit="submitNewCase(event)">
+        <label class="field"><span>Состав преступления (кратко)</span><input type="text" id="new-case-crime" required placeholder="Мошенничество"></label>
+        <label class="field"><span>Статья УК</span><input type="text" id="new-case-article" value="159.3 УК РФ"></label>
+        <label class="field"><span>Регион</span><input type="text" id="new-case-region"></label>
+        <label class="field"><span>Отдел</span><input type="text" id="new-case-department"></label>
+        <label class="field"><span>Ведомство</span><select id="new-case-agency" disabled title="Ведомство определяется вашей ролью (ПОЛ-001)"></select></label>
+        <div class="modal-actions">
+          <button type="button" class="btn-sm" onclick="closeNewCaseModal()">Отмена</button>
+          <button type="submit" class="btn-primary btn-sm-inline">Зарегистрировать дело</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="article-explanation-modal">
+    <div class="modal-panel request-modal-panel article-explanation-panel" onclick="event.stopPropagation()">
+      <h3 id="article-explanation-title">Статья</h3>
+      <p class="muted modal-hint" id="article-explanation-law">—</p>
+      <label class="field">
+        <span id="article-explanation-field-label">Краткое пояснение (только просмотр)</span>
+        <textarea id="article-explanation-text" rows="6" readonly class="article-explanation-readonly" placeholder="Краткое пояснение для демо…"></textarea>
+      </label>
+      <p class="article-explanation-asof muted" id="article-explanation-asof">Актуально на: —</p>
+      <p class="legal-doc-sources muted">
+        Официальный текст:
+        <a id="article-explanation-pravo" href="https://pravo.gov.ru/" target="_blank" rel="noopener noreferrer">pravo.gov.ru ↗</a>
+        ·
+        <a id="article-explanation-consultant" href="https://www.consultant.ru/" target="_blank" rel="noopener noreferrer">КонсультантПлюс ↗</a>
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm hidden" id="article-explanation-save-btn" onclick="saveArticleExplanationFromModal()">Сохранить</button>
+        <button type="button" class="btn-sm" onclick="closeArticleExplanationModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="legal-doc-modal">
+    <div class="modal-panel legal-doc-panel" onclick="event.stopPropagation()">
+      <div class="legal-doc-head">
+        <div>
+          <span class="reg-tag" id="legal-doc-type">Акт</span>
+          <h3 id="legal-doc-title">—</h3>
+          <p class="muted" id="legal-doc-code">—</p>
+        </div>
+        <button type="button" class="btn-sm" onclick="closeLegalDocModal()" aria-label="Закрыть">×</button>
+      </div>
+      <p id="legal-doc-summary">—</p>
+      <p class="reg-law-epsok" id="legal-doc-epsok"></p>
+      <div class="reg-law-agencies" id="legal-doc-agencies"></div>
+      <div id="legal-doc-articles"></div>
+      <p class="legal-doc-sync muted" id="legal-doc-sync">Актуально на: —</p>
+      <p class="legal-doc-sources">
+        <a id="legal-doc-pravo" href="https://pravo.gov.ru/" target="_blank" rel="noopener noreferrer">Официальный текст — pravo.gov.ru ↗</a>
+        <a id="legal-doc-consultant" href="https://www.consultant.ru/" target="_blank" rel="noopener noreferrer">Поиск в КонсультантПлюс ↗</a>
+      </p>
+      <p class="legal-doc-disclaimer muted" id="legal-doc-disclaimer-user">Тексты — справочные описания для демо. Не заменяют официальную редакцию.</p>
+      <p class="legal-doc-disclaimer muted hidden" id="legal-doc-disclaimer-dev">Для ручного импорта: <code>LEGAL_ARTICLE_TEXTS</code> и <code>DEFAULT_ARTICLE_EXPLANATIONS</code> в app.js.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeLegalDocModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="policy-detail-modal">
+    <div class="modal-panel policy-detail-panel" onclick="event.stopPropagation()">
+      <div class="policy-detail-head">
+        <span class="reg-code" id="policy-detail-code">ПОЛ-000</span>
+        <h3 id="policy-detail-title">—</h3>
+      </div>
+      <p class="policy-detail-summary" id="policy-detail-summary">—</p>
+      <div class="policy-detail-cols">
+        <div>
+          <h4>Что можно</h4>
+          <ul class="policy-detail-list policy-detail-can" id="policy-detail-can"></ul>
+        </div>
+        <div>
+          <h4>Что нельзя</h4>
+          <ul class="policy-detail-list policy-detail-cannot" id="policy-detail-cannot"></ul>
+        </div>
+      </div>
+      <div class="reg-callout policy-detail-example">
+        <strong>Пример:</strong> <span id="policy-detail-example">—</span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm hidden" id="policy-detail-module-btn">Открыть модуль</button>
+        <button type="button" class="btn-sm" onclick="closePolicyDetailModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="discipline-modal">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <h3 id="discipline-modal-title">Взыскание</h3>
+      <input type="hidden" id="discipline-kind" value="remark">
+      <label class="field">
+        <span>Формулировка</span>
+        <textarea id="discipline-text" rows="3" placeholder="Опишите нарушение или заслугу…" required></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-sm" onclick="closeDisciplineModal()">Отмена</button>
+        <button type="button" class="btn-primary btn-sm-inline" onclick="confirmDiscipline()">Внести в дело</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <div class="modal-overlay hidden" id="graph-peer-detail-modal">
+    <div class="modal-panel graph-peer-detail-panel" onclick="event.stopPropagation()">
+      <div class="graph-peer-detail-head">
+        <h3 id="graph-peer-detail-title">Абонент</h3>
+        <button type="button" class="btn-sm" onclick="closeGraphPeerDetailModal()" aria-label="Закрыть">×</button>
+      </div>
+      <div class="graph-peer-detail-body" id="graph-peer-detail-body"></div>
+      <div class="modal-actions graph-peer-detail-actions">
+        <button type="button" class="btn-sm" onclick="closeGraphPeerDetailModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="cluster-hub-modal">
+    <div class="modal-panel cluster-hub-panel" onclick="event.stopPropagation()">
+      <div class="cluster-hub-head">
+        <h3 id="cluster-hub-title">Кластер</h3>
+        <button type="button" class="btn-sm" onclick="closeClusterHub()" aria-label="Закрыть">×</button>
+      </div>
+      <div class="cluster-hub-body" id="cluster-hub-body"></div>
+      <div class="modal-actions cluster-hub-actions">
+        <button type="button" class="btn-sm" id="cluster-hub-download-btn" onclick="downloadClusterSummary(activeClusterHubId)">Сводка (TXT)</button>
+        <button type="button" class="btn-sm" onclick="exportClusterHubCsv(activeClusterHubId)">CSV</button>
+        <button type="button" class="btn-sm" onclick="closeClusterHub()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="victim-notification-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3>Уведомление потерпевшего</h3>
+      <p class="muted modal-hint">Фиксация уведомления в хронологии дела · ПОЛ-004 · ст. 42 УПК РФ</p>
+      <input type="hidden" id="victim-notif-case-id" value="">
+      <label class="field"><span>Потерпевший</span>
+        <input type="text" id="victim-notif-name" placeholder="ФИО потерпевшего">
+      </label>
+      <label class="field"><span>Канал</span>
+        <select id="victim-notif-channel">
+          <option value="СМС">СМС</option>
+          <option value="Почта">Почта</option>
+          <option value="Лично">Лично под роспись</option>
+          <option value="Госуслуги">Госуслуги</option>
+        </select>
+      </label>
+      <label class="field"><span>Текст уведомления</span>
+        <textarea id="victim-notif-text" rows="3" placeholder="О чём уведомлён потерпевший"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary btn-sm" onclick="logVictimNotification()">Зафиксировать</button>
+        <button type="button" class="btn-sm" onclick="closeVictimNotificationModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="case-status-modal" onclick="if(event.target===this)closeCaseStatusChangeModal()">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3 id="case-status-modal-title">Изменение статуса</h3>
+      <p class="muted modal-hint" id="case-status-modal-hint">—</p>
+      <p class="muted">Демо-режим: статус обновится в реестре, хронологии и журнале аудита.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary btn-sm" onclick="confirmCaseStatusChange()">Подтвердить</button>
+        <button type="button" class="btn-sm" onclick="closeCaseStatusChangeModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="batch-request-modal" onclick="if(event.target===this)closeBatchRequestWizard()">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3>Пакет запросов</h3>
+      <p class="muted">Черновики межведомственных запросов с общим правовым основанием</p>
+      <input type="hidden" id="batch-request-case-id" value="">
+      <label class="field"><span>Правовое основание</span>
+        <textarea id="batch-req-legal" rows="2" placeholder="Постановление следователя…"></textarea>
+      </label>
+      <div class="batch-req-checkboxes">
+        <label class="batch-req-check"><input type="checkbox" id="batch-req-fns" checked> ФНС · 2-НДФЛ</label>
+        <label class="batch-req-check"><input type="checkbox" id="batch-req-rfm" checked> РФМ · финмониторинг</label>
+        <label class="batch-req-check"><input type="checkbox" id="batch-req-mvd" checked> МВД · ГИАЦ</label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary btn-sm" onclick="confirmBatchRequestWizard()">Создать черновики</button>
+        <button type="button" class="btn-sm" onclick="closeBatchRequestWizard()">Отмена</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="deadline-extension-modal">
+    <div class="modal-panel request-modal-panel" onclick="event.stopPropagation()">
+      <h3>Ходатайство о продлении срока</h3>
+      <p class="muted modal-hint" id="deadline-extension-hint">—</p>
+      <input type="hidden" id="deadline-extension-case-id" value="">
+      <label class="field"><span>Срок продления</span>
+        <select id="deadline-extension-months">
+          <option value="1">1 месяц (ст. 162 УПК)</option>
+          <option value="3">3 месяца (ст. 162 УПК)</option>
+          <option value="6">6 месяцев (ст. 162 УПК)</option>
+        </select>
+      </label>
+      <label class="field"><span>Основание</span>
+        <textarea id="deadline-extension-grounds" rows="3" placeholder="Объём следственных действий, экспертизы…"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary btn-sm" onclick="downloadDeadlineExtensionDraft()">Черновик (TXT)</button>
+        <button type="button" class="btn-sm" onclick="closeDeadlineExtensionModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay hidden" id="case-timeline-note-modal">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+      <h3>Запись в хронологию</h3>
+      <form id="case-timeline-note-form" onsubmit="submitCaseTimelineNote(event)">
+        <label class="field"><span>Текст записи</span>
+          <textarea id="case-timeline-note-text" rows="4" required placeholder="Следственное действие, контакт, заметка…" maxlength="500"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary btn-sm">Добавить</button>
+          <button type="button" class="btn-sm" onclick="closeCaseTimelineNoteModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="app.js?v=2.5.1"></script>
+</body>
+</html>

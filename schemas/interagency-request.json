@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/interagency-request.json",
+  "title": "InteragencyRequest",
+  "description": "Межведомственный запрос ЕПСОК — реестр типов: configs/agency-registry.yaml",
+  "type": "object",
+  "required": ["id", "caseId", "requestType", "targetAgency", "status", "legalBasis"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "requestType": {
+      "type": "string",
+      "enum": [
+        "MVD_PERSON_CHECK",
+        "MVD_WANTED",
+        "MVD_VEHICLE",
+        "MVD_CDR",
+        "SK_CASE_LINK",
+        "SK_MATERIALS",
+        "SK_SUBORDINATION",
+        "SK_EXPERTISE",
+        "PROSEC_EXTENSION",
+        "PROSEC_SUBORDINATION",
+        "FNS_EGRUL",
+        "FNS_INCOME_2NDFL",
+        "FNS_DECLARATION",
+        "FNS_ACCOUNT_INFO",
+        "FNS_INN_CHECK",
+        "RFM_TRANSACTIONS",
+        "RFM_PODFT_ALERT",
+        "RFM_CHAIN",
+        "FTS_DECLARATION",
+        "FTS_CONSIGNOR",
+        "FTS_TNVED",
+        "FSIN_CUSTODY",
+        "FSIN_PAROLE",
+        "FSIN_PRETRIAL",
+        "RGV_WEAPON",
+        "RGV_LICENSE",
+        "FSB_ORD_QUERY",
+        "FSB_CASE_LINK",
+        "CRT_COURT_ORDER"
+      ]
+    },
+    "targetAgency": {
+      "type": "string",
+      "enum": ["MVD", "SK", "FNS", "RFM", "FTS", "FSB", "FSIN", "RGV", "PROSECUTOR", "COURT", "MINDIG"]
+    },
+    "legalReference": {
+      "type": "string",
+      "description": "Ссылка на ФЗ / статью УПК из agency-registry"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "submitted", "accepted", "in_progress", "fulfilled", "rejected", "escalated"]
+    },
+    "legalBasis": {
+      "type": "string",
+      "description": "Номер постановления / основание"
+    },
+    "submittedAt": { "type": "string", "format": "date-time" },
+    "slaDeadline": { "type": "string", "format": "date-time" },
+    "requestPayload": { "type": "object" },
+    "responsePayload": { "type": "object" },
+    "rejectionReason": { "type": "string" },
+    "submittedBy": { "type": "string", "format": "uuid" }
+  }
+}

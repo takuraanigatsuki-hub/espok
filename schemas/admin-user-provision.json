@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-user-provision.json",
+  "title": "AdminUserProvision",
+  "description": "Заявка на создание/изменение учётной записи (USR)",
+  "type": "object",
+  "required": ["id", "action", "targetLogin", "requestedRoles", "status", "requestedBy"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "action": { "type": "string", "enum": ["create", "disable", "enable", "assign_roles", "reset_mfa"] },
+    "targetLogin": { "type": "string" },
+    "targetAgency": { "type": "string", "enum": ["MVD", "SK", "PROSEC", "FSB", "FNS", "RFM", "MINDIG"] },
+    "targetRegion": { "type": "string" },
+    "requestedRoles": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["INV", "INV_LEAD", "OPS", "PROSEC", "ANALYST", "EXEC", "ADMIN", "AUDIT"] }
+    },
+    "status": { "type": "string", "enum": ["draft", "pending_approval", "approved", "rejected", "applied"] },
+    "requestedBy": { "type": "string", "format": "uuid" },
+    "approvedBy": { "type": "string", "format": "uuid" },
+    "justification": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "appliedAt": { "type": "string", "format": "date-time" }
+  }
+}

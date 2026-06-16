@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>ЕПСОК — Видеопрезентация</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #001126;
+      --sidebar: #0a1a33;
+      --blue: #0061d9;
+      --blue-link: #0050b2;
+      --red: #e52e2e;
+      --bg: #f5f5f7;
+      --text: #333;
+      --muted: #76767a;
+      --success: #43a047;
+      --gold: #996600;
+      --scene-dur: 7s;
+    }
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: var(--navy);
+      color: #fff;
+    }
+    .tricolor {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      z-index: 100;
+      background: linear-gradient(90deg, #fff 33.33%, var(--blue) 33.33%, var(--blue) 66.66%, var(--red) 66.66%);
+    }
+    .progress {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: var(--blue);
+      z-index: 100;
+      width: 0%;
+      transition: width 0.3s linear;
+    }
+    .scene-counter {
+      position: fixed;
+      bottom: 24px;
+      right: 40px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      z-index: 100;
+      letter-spacing: 0.04em;
+    }
+    .logo-mark {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      background: var(--sidebar);
+      border: 1px solid rgba(0,97,217,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 44px; height: 44px; }
+
+    .deck { width: 100%; height: 100%; position: relative; }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 100px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.9s ease;
+    }
+    .scene.active { opacity: 1; pointer-events: auto; }
+
+    /* Scene backgrounds */
+    .scene--hero { background: radial-gradient(ellipse 80% 60% at 70% 40%, rgba(0,97,217,0.18) 0%, transparent 60%), var(--navy); }
+    .scene--light { background: var(--bg); color: var(--text); }
+    .scene--dark { background: var(--navy); }
+    .scene--gradient { background: linear-gradient(135deg, var(--navy) 0%, #0d2847 50%, var(--sidebar) 100%); }
+
+    .hero-inner { display: flex; align-items: center; gap: 48px; }
+    .hero-text h1 {
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+    .hero-text h1 span { color: var(--blue); }
+    .hero-sub {
+      font-size: 26px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.45;
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .pill--blue { background: rgba(0,97,217,0.2); border: 1px solid rgba(0,97,217,0.5); color: #7eb8ff; }
+    .pill--green { background: rgba(67,160,71,0.15); border: 1px solid rgba(67,160,71,0.4); color: #7dcea0; }
+
+    .scene-title {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .scene-title::after {
+      content: '';
+      display: block;
+      width: 64px;
+      height: 4px;
+      background: var(--blue);
+      margin-top: 16px;
+      border-radius: 2px;
+    }
+    .scene--light .scene-title { color: var(--navy); }
+    .scene--light .scene-title::after { background: var(--blue); }
+
+    .bullets { list-style: none; margin-top: 36px; display: flex; flex-direction: column; gap: 18px; }
+    .bullets li {
+      font-size: 22px;
+      line-height: 1.4;
+      padding-left: 28px;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    .scene.active .bullets li { animation: slideIn 0.6s ease forwards; }
+    .scene.active .bullets li:nth-child(1) { animation-delay: 0.3s; }
+    .scene.active .bullets li:nth-child(2) { animation-delay: 0.5s; }
+    .scene.active .bullets li:nth-child(3) { animation-delay: 0.7s; }
+    .scene.active .bullets li:nth-child(4) { animation-delay: 0.9s; }
+    .scene.active .bullets li:nth-child(5) { animation-delay: 1.1s; }
+    .bullets li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 12px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+    .scene--light .bullets li { color: var(--text); }
+    .scene--dark .bullets li, .scene--gradient .bullets li, .scene--hero .bullets li { color: rgba(255,255,255,0.88); }
+
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .quote {
+      margin-top: 40px;
+      padding: 20px 28px;
+      border-left: 3px solid var(--blue);
+      background: rgba(0,97,217,0.08);
+      border-radius: 0 12px 12px 0;
+      font-size: 20px;
+      font-style: italic;
+      color: rgba(255,255,255,0.65);
+      max-width: 900px;
+    }
+    .scene--light .quote { background: rgba(0,97,217,0.06); color: var(--blue-link); }
+
+    /* Module grid */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+      max-width: 1200px;
+    }
+    .module-card {
+      background: #fff;
+      border: 1px solid #d9d9de;
+      border-radius: 12px;
+      padding: 28px 32px;
+      box-shadow: 0 8px 32px rgba(0,17,38,0.06);
+      border-left: 4px solid var(--blue);
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .scene.active .module-card { animation: cardUp 0.65s ease forwards; }
+    .scene.active .module-card:nth-child(1) { animation-delay: 0.25s; }
+    .scene.active .module-card:nth-child(2) { animation-delay: 0.4s; }
+    .scene.active .module-card:nth-child(3) { animation-delay: 0.55s; }
+    .scene.active .module-card:nth-child(4) { animation-delay: 0.7s; }
+    @keyframes cardUp { to { opacity: 1; transform: translateY(0); } }
+    .module-card h3 { font-size: 20px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+    .module-card p { font-size: 15px; color: var(--muted); line-height: 1.45; }
+    .module-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+
+    /* Security badges */
+    .sec-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .sec-badge {
+      padding: 14px 24px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    .scene.active .sec-badge { animation: pop 0.5s ease forwards; }
+    .scene.active .sec-badge:nth-child(1) { animation-delay: 0.2s; }
+    .scene.active .sec-badge:nth-child(2) { animation-delay: 0.35s; }
+    .scene.active .sec-badge:nth-child(3) { animation-delay: 0.5s; }
+    .scene.active .sec-badge:nth-child(4) { animation-delay: 0.65s; }
+    .scene.active .sec-badge:nth-child(5) { animation-delay: 0.8s; }
+    .scene.active .sec-badge:nth-child(6) { animation-delay: 0.95s; }
+    .sec-badge--gost { border-color: rgba(0,97,217,0.5); background: rgba(0,97,217,0.15); color: #7eb8ff; }
+    .sec-badge--ok { border-color: rgba(67,160,71,0.5); background: rgba(67,160,71,0.12); color: #7dcea0; }
+    @keyframes pop { to { opacity: 1; transform: scale(1); } }
+
+    /* UI mockup */
+    .ui-mock {
+      position: absolute;
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 680px;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      border: 1px solid #d9d9de;
+      opacity: 0;
+    }
+    .scene.active .ui-mock { animation: mockIn 1s ease 0.4s forwards; }
+    @keyframes mockIn { to { opacity: 1; transform: translateY(-50%) translateX(0); } }
+    .ui-mock-bar {
+      height: 48px;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+    }
+    .ui-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.25); }
+    .ui-mock-body { padding: 20px; }
+    .ui-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .ui-kpi {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #e5e5eb;
+    }
+    .ui-kpi-val { font-size: 22px; font-weight: 700; color: var(--blue); }
+    .ui-kpi-lbl { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .ui-graph {
+      height: 180px;
+      background: linear-gradient(135deg, #eef4fc 0%, #f5f5f7 100%);
+      border-radius: 8px;
+      border: 1px solid #e5e5eb;
+      position: relative;
+      overflow: hidden;
+    }
+    .ui-node {
+      position: absolute;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--blue);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--blue);
+      animation: pulse 2s ease infinite;
+    }
+    .ui-node:nth-child(1) { left: 15%; top: 30%; animation-delay: 0s; }
+    .ui-node:nth-child(2) { left: 45%; top: 55%; animation-delay: 0.4s; background: var(--blue); color: #fff; }
+    .ui-node:nth-child(3) { left: 70%; top: 25%; animation-delay: 0.8s; }
+    .ui-node:nth-child(4) { left: 55%; top: 15%; animation-delay: 1.2s; border-color: var(--success); color: var(--success); }
+    .ui-edge {
+      position: absolute;
+      height: 2px;
+      background: rgba(0,97,217,0.35);
+      transform-origin: left center;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,97,217,0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(0,97,217,0); }
+    }
+
+    /* KPI row */
+    .kpi-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+    .kpi-card {
+      flex: 1;
+      min-width: 200px;
+      background: var(--sidebar);
+      border: 1px solid rgba(0,97,217,0.35);
+      border-radius: 12px;
+      padding: 24px 28px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .scene.active .kpi-card { animation: cardUp 0.6s ease forwards; }
+    .scene.active .kpi-card:nth-child(1) { animation-delay: 0.2s; }
+    .scene.active .kpi-card:nth-child(2) { animation-delay: 0.35s; }
+    .scene.active .kpi-card:nth-child(3) { animation-delay: 0.5s; }
+    .scene.active .kpi-card:nth-child(4) { animation-delay: 0.65s; }
+    .kpi-card .from { font-size: 14px; color: rgba(255,255,255,0.4); text-decoration: line-through; }
+    .kpi-card .to { font-size: 32px; font-weight: 700; color: var(--blue); margin-top: 4px; }
+    .kpi-card .lbl { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 8px; }
+
+    /* Closing */
+    .closing-box {
+      margin-top: 36px;
+      background: var(--sidebar);
+      border: 1px solid rgba(0,97,217,0.45);
+      border-radius: 16px;
+      padding: 36px 48px;
+      max-width: 700px;
+    }
+    .closing-box p { font-size: 20px; margin-bottom: 12px; color: rgba(255,255,255,0.85); }
+    .closing-box .url { font-size: 28px; font-weight: 700; color: var(--blue); }
+    .closing-box .creds { font-size: 16px; color: rgba(255,255,255,0.55); margin-top: 16px; }
+
+    .agency-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 36px;
+      max-width: 1100px;
+    }
+    .agency-chip {
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      opacity: 0;
+    }
+    .scene.active .agency-chip { animation: pop 0.4s ease forwards; }
+    .scene.active .agency-chip:nth-child(1) { animation-delay: 0.15s; }
+    .scene.active .agency-chip:nth-child(2) { animation-delay: 0.25s; }
+    .scene.active .agency-chip:nth-child(3) { animation-delay: 0.35s; }
+    .scene.active .agency-chip:nth-child(4) { animation-delay: 0.45s; }
+    .scene.active .agency-chip:nth-child(5) { animation-delay: 0.55s; }
+    .scene.active .agency-chip:nth-child(6) { animation-delay: 0.65s; }
+    .scene.active .agency-chip:nth-child(7) { animation-delay: 0.75s; }
+    .scene.active .agency-chip:nth-child(8) { animation-delay: 0.85s; }
+  </style>
+</head>
+<body>
+  <div class="tricolor"></div>
+  <div class="progress" id="progress"></div>
+  <div class="scene-counter" id="counter"></div>
+
+  <div class="deck" id="deck">
+    <!-- 1 Hero -->
+    <section class="scene scene--hero active" data-dur="8">
+      <div class="hero-inner">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="7" fill="#001126"/><circle cx="16" cy="16" r="9.2" stroke="#fff" stroke-width="1.15"/><circle cx="16" cy="8.2" r="1.1" fill="#fff"/><path d="M16 10.8 L11.8 16.2 L13.4 17.6 L16 13.8 L18.6 17.6 L20.2 16.2 Z" fill="#fff"/><path d="M10.8 20.8 Q16 18.2 21.2 20.8 L20.4 21.6 Q16 19.4 11.6 21.6 Z" fill="#fff"/></svg>
+        </div>
+        <div class="hero-text">
+          <h1><span>ЕПСОК</span></h1>
+          <p class="hero-sub">Единая платформа следственно-оперативной координации</p>
+          <span class="pill pill--blue">Пилот · Краснодарский край · ФГИС</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 Problem -->
+    <section class="scene scene--dark" data-dur="7">
+      <h2 class="scene-title">Проблема</h2>
+      <ul class="bullets">
+        <li>15+ ведомственных ИС без единого контура расследования</li>
+        <li>Межведомственный обмен — 14–45 рабочих дней</li>
+        <li>Серийные преступления не видны на федеральном уровне</li>
+        <li>~8% дел — нарушения процессуальных сроков УПК</li>
+      </ul>
+      <p class="quote">«Следователь во Владивостоке не видит связь с делом в Калининграде»</p>
+    </section>
+
+    <!-- 3 Solution -->
+    <section class="scene scene--light" data-dur="7">
+      <h2 class="scene-title">Решение</h2>
+      <ul class="bullets">
+        <li>Федеральная платформа-надстройка над ГИАЦ, СОДЧ и ИС ведомств</li>
+        <li>Сквозная карточка · граф связей · конвейер запросов</li>
+        <li>Реестр доказательств с WORM-аудитом</li>
+        <li>Horizon Intelligence — федеральная аналитика без гражданской БД</li>
+      </ul>
+      <div class="ui-mock" style="opacity:1">
+        <div class="ui-mock-bar"><span class="ui-dot"></span><span class="ui-dot"></span><span class="ui-dot"></span></div>
+        <div class="ui-mock-body">
+          <div class="ui-kpi-row">
+            <div class="ui-kpi"><div class="ui-kpi-val">15</div><div class="ui-kpi-lbl">Дела</div></div>
+            <div class="ui-kpi"><div class="ui-kpi-val">34</div><div class="ui-kpi-lbl">Запросы</div></div>
+            <div class="ui-kpi"><div class="ui-kpi-val">23</div><div class="ui-kpi-lbl">Связи</div></div>
+          </div>
+          <div class="ui-graph">
+            <div class="ui-node">ФЛ</div>
+            <div class="ui-node">SIM</div>
+            <div class="ui-node">IBAN</div>
+            <div class="ui-node">ООО</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 Modules -->
+    <section class="scene scene--light" data-dur="8">
+      <h2 class="scene-title">Ключевые модули</h2>
+      <div class="module-grid">
+        <div class="module-card"><div class="module-tag">Следствие</div><h3>Реестр и карточка дела</h3><p>Каскадный фильтр ПОЛ-001 · хронология · рабочая группа · смежные дела</p></div>
+        <div class="module-card" style="border-left-color:#0050b2"><div class="module-tag">Аналитика</div><h3>Граф связей</h3><p>Изолированный контур по делу · коммуникации · импорт OSINT</p></div>
+        <div class="module-card" style="border-left-color:#43a047"><div class="module-tag">Обмен</div><h3>Межвед. запросы</h3><p>СМЭВ · 15 ведомств · SLA от 4 часов до 3 дней</p></div>
+        <div class="module-card" style="border-left-color:#996600"><div class="module-tag">ПОЛ-006</div><h3>Открытые источники</h3><p>Изолированный контур · whitelist · пакеты доказательств SHA-256</p></div>
+      </div>
+    </section>
+
+    <!-- 5 Horizon -->
+    <section class="scene scene--gradient" data-dur="7">
+      <h2 class="scene-title">Горизонт — федеральная аналитика</h2>
+      <ul class="bullets">
+        <li>Serendipity Engine — неожиданные совпадения между делами</li>
+        <li>Ghost Link Detector — скрытые связи через обезличенные паттерны</li>
+        <li>Investigation Digital Twin — моделирование сценариев</li>
+        <li>7 модулей · хеши, не ФИО · ПОЛ-007</li>
+      </ul>
+      <span class="pill pill--green" style="margin-top:32px">Краснодар · Москва · Татарстан</span>
+    </section>
+
+    <!-- 6 Security -->
+    <section class="scene scene--dark" data-dur="8">
+      <h2 class="scene-title">Защита государственного уровня</h2>
+      <div class="sec-grid">
+        <span class="sec-badge sec-badge--gost">ГОСТ TLS 1.3</span>
+        <span class="sec-badge">AES-256-GCM</span>
+        <span class="sec-badge">HMAC-SHA-256</span>
+        <span class="sec-badge">PBKDF2 · 120k</span>
+        <span class="sec-badge">WORM-аудит</span>
+        <span class="sec-badge sec-badge--ok">Zero Trust · ABAC</span>
+      </div>
+      <ul class="bullets" style="margin-top:36px">
+        <li>Тех. админ ЦОД не видит содержимое дел (ПОЛ-008)</li>
+        <li>187-ФЗ КИИ · ФСТЭК · данные только в РФ</li>
+        <li>Корпоративная почта: 4–6 уровней шифрования · HSM</li>
+      </ul>
+    </section>
+
+    <!-- 7 Ecosystem -->
+    <section class="scene scene--dark" data-dur="7">
+      <h2 class="scene-title">Экосистема</h2>
+      <div class="agency-row">
+        <span class="agency-chip">МВД России</span>
+        <span class="agency-chip">СК РФ</span>
+        <span class="agency-chip">Прокуратура</span>
+        <span class="agency-chip">ФСБ</span>
+        <span class="agency-chip">ФНС · РФМ · ФТС</span>
+        <span class="agency-chip">Росгвардия</span>
+        <span class="agency-chip">Минцифры · СМЭВ</span>
+        <span class="agency-chip">Суды РФ</span>
+      </div>
+      <p class="quote" style="margin-top:40px">ЕПСОК не заменяет ведомственные системы — интегрируется через единый шлюз</p>
+    </section>
+
+    <!-- 8 KPI -->
+    <section class="scene scene--dark" data-dur="7">
+      <h2 class="scene-title">Целевые показатели к 2032</h2>
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="from">14–45 дней</div><div class="to">1–3 дня</div><div class="lbl">Межвед. запрос</div></div>
+        <div class="kpi-card"><div class="from">~12%</div><div class="to">≥45%</div><div class="lbl">Межрег. связи</div></div>
+        <div class="kpi-card"><div class="from">~8%</div><div class="to">≤2%</div><div class="lbl">Нарушения УПК</div></div>
+        <div class="kpi-card"><div class="from">2–4 нед.</div><div class="to">72 ч</div><div class="lbl">Серийные дела</div></div>
+      </div>
+    </section>
+
+    <!-- 9 Demo -->
+    <section class="scene scene--hero" data-dur="8">
+      <h2 class="scene-title" style="color:#fff">Интерактивный прототип</h2>
+      <div class="closing-box">
+        <p>Демонстрация интерфейса</p>
+        <div class="url">localhost:3000</div>
+        <div class="creds">ivanov.sp / epsok2028 · sidorov.av — тех. админ</div>
+      </div>
+      <span class="pill pill--blue" style="margin-top:32px">Единая платформа следственно-оперативной координации</span>
+    </section>
+  </div>
+
+  <script>
+    const scenes = [...document.querySelectorAll('.scene')];
+    const progress = document.getElementById('progress');
+    const counter = document.getElementById('counter');
+    let idx = 0;
+    const durations = scenes.map(s => (+s.dataset.dur || 7) * 1000);
+    const totalMs = durations.reduce((a, b) => a + b, 0);
+    let elapsedTotal = 0;
+
+    window.__EPSOK_VIDEO_MS = totalMs + 1500;
+
+    function show(i) {
+      scenes.forEach((s, j) => s.classList.toggle('active', j === i));
+      counter.textContent = `${i + 1} / ${scenes.length}`;
+    }
+
+    show(0);
+    let sceneElapsed = 0;
+
+    setInterval(() => {
+      elapsedTotal += 100;
+      sceneElapsed += 100;
+      progress.style.width = `${Math.min(100, (elapsedTotal / totalMs) * 100)}%`;
+
+      if (sceneElapsed >= durations[idx]) {
+        sceneElapsed = 0;
+        idx += 1;
+        if (idx >= scenes.length) {
+          document.body.dataset.done = 'true';
+          return;
+        }
+        show(idx);
+      }
+    }, 100);
+  </script>
+</body>
+</html>

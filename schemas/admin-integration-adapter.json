@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-integration-adapter.json",
+  "title": "AdminIntegrationAdapter",
+  "description": "Адаптер интеграции / СМЭВ (INT)",
+  "type": "object",
+  "required": ["adapterId", "agency", "status"],
+  "properties": {
+    "adapterId": { "type": "string" },
+    "agency": { "type": "string", "enum": ["SMEV", "MVD", "SK", "FNS", "RFM", "FTS", "FSB", "GIAC"] },
+    "displayName": { "type": "string" },
+    "status": { "type": "string", "enum": ["online", "offline", "degraded", "cert_expiring"] },
+    "endpointUrl": { "type": "string", "format": "uri" },
+    "mtlsCertExpiresAt": { "type": "string", "format": "date-time" },
+    "queueDepth": { "type": "integer" },
+    "avgResponseMs": { "type": "number" },
+    "lastSuccessAt": { "type": "string", "format": "date-time" },
+    "lastError": { "type": "string" }
+  }
+}

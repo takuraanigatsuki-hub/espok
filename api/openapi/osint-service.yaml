@@ -1,0 +1,438 @@
+openapi: 3.0.3
+info:
+  title: ЕПСОК OSINT Intelligence Service API
+  description: |
+    API контролируемого OSINT-сбора в рамках расследования.
+    Требует mTLS + Bearer token (ЕСИА) + право на дело (ABAC POL-006).
+    Не заменяет межведомственные запросы через СМЭВ.
+  version: 1.0.0
+
+servers:
+  - url: https://api.epsok.gov.ru/v1
+    description: Промышленный контур (проект)
+
+security:
+  - bearerAuth: []
+  - mtls: []
+
+tags:
+  - name: osint-scans
+    description: Задачи OSINT-сбора
+  - name: osint-findings
+    description: Находки и импорт в граф
+
+paths:
+  /cases/{caseId}/osint/scans:
+    get:
+      tags: [osint-scans]
+      summary: Список OSINT-сканов по делу
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, queued, running, completed, failed, cancelled, expired]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintScanList'
+        '403':
+          description: Нет доступа к делу (ABAC)
+    post:
+      tags: [osint-scans]
+      summary: Создать и поставить в очередь OSINT-скан
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsintScanCreate'
+      responses:
+        '201':
+          description: Скан создан и поставлен в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintScan'
+        '400':
+          description: Некорректные параметры или превышен лимит
+        '403':
+          description: Нет прав или отсутствует legalBasis (POL-006)
+
+  /osint/scans/{scanId}:
+    get:
+      tags: [osint-scans]
+      summary: Статус и метаданные скана
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintScan'
+        '404':
+          description: Скан не найден
+    delete:
+      tags: [osint-scans]
+      summary: Отменить скан (только queued или running)
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+      responses:
+        '204':
+          description: Отменён
+        '409':
+          description: Скан уже завершён
+
+  /osint/scans/{scanId}/findings:
+    get:
+      tags: [osint-findings]
+      summary: Список находок по скану
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+        - name: normalizedType
+          in: query
+          schema:
+            type: string
+        - name: requiresReview
+          in: query
+          schema:
+            type: boolean
+        - name: importedToGraph
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintFindingList'
+
+  /osint/scans/{scanId}/findings/{findingId}/review:
+    post:
+      tags: [osint-findings]
+      summary: Подтвердить или отклонить finding, требующий review
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+        - $ref: '#/components/parameters/findingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsintFindingReview'
+      responses:
+        '200':
+          description: Статус review обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintFinding'
+
+  /osint/scans/{scanId}/import:
+    post:
+      tags: [osint-findings]
+      summary: Импортировать findings в граф Link Intelligence
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsintImportRequest'
+      responses:
+        '200':
+          description: Импорт выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintImportResult'
+        '403':
+          description: Finding требует review или нет прав
+
+  /osint/scans/{scanId}/evidence:
+    post:
+      tags: [osint-findings]
+      summary: Создать EvidenceItem из findings (пакет для протокола)
+      parameters:
+        - $ref: '#/components/parameters/scanId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OsintEvidenceRequest'
+      responses:
+        '201':
+          description: Доказательство зарегистрировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OsintEvidenceResult'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mtls:
+      type: mutualTLS
+
+  parameters:
+    caseId:
+      name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    scanId:
+      name: scanId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    findingId:
+      name: findingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    OsintScanCreate:
+      type: object
+      required: [targetType, targetValue, moduleProfile, legalBasis, contour]
+      properties:
+        targetType:
+          type: string
+          enum: [HUMAN_NAME, EMAILADDR, PHONE_NUMBER, USERNAME, INTERNET_NAME, IP_ADDRESS]
+        targetValue:
+          type: string
+          maxLength: 512
+          example: "user@example.com"
+        moduleProfile:
+          type: string
+          enum: [passive_ru, footprint_ru, investigate_ru]
+        legalBasis:
+          type: string
+          minLength: 10
+          example: "Постановление следователя №123 от 01.06.2026"
+        contour:
+          type: string
+          enum: [investigative, operative]
+        autoImport:
+          type: boolean
+          default: true
+          description: Автоимпорт findings, не требующих review
+
+    OsintScan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, queued, running, completed, failed, cancelled, expired]
+        targetType:
+          type: string
+        targetValue:
+          type: string
+          description: Может быть маскирован (u***@example.com)
+        targetValueHash:
+          type: string
+        moduleProfile:
+          type: string
+        legalBasis:
+          type: string
+        contour:
+          type: string
+        requestedBy:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        findingCount:
+          type: integer
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    OsintScanList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OsintScan'
+        total:
+          type: integer
+
+    OsintFinding:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scanId:
+          type: string
+          format: uuid
+        caseId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        normalizedType:
+          type: string
+        value:
+          type: string
+        valueHash:
+          type: string
+        confidence:
+          type: integer
+        sourceModule:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        graphNodeId:
+          type: string
+        importedToGraph:
+          type: boolean
+        requiresReview:
+          type: boolean
+        reviewStatus:
+          type: string
+          enum: [pending, approved, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    OsintFindingList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OsintFinding'
+        total:
+          type: integer
+
+    OsintFindingReview:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+        comment:
+          type: string
+          maxLength: 2000
+
+    OsintImportRequest:
+      type: object
+      properties:
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Пустой массив = импорт всех approved + auto-import eligible
+        linkToPersonNodeId:
+          type: string
+          description: Привязать новые узлы к существующему Person в графе
+
+    OsintImportResult:
+      type: object
+      properties:
+        importedCount:
+          type: integer
+        skippedCount:
+          type: integer
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              findingId:
+                type: string
+                format: uuid
+              graphNodeId:
+                type: string
+              nodeType:
+                type: string
+
+    OsintEvidenceRequest:
+      type: object
+      required: [findingIds, description]
+      properties:
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description:
+          type: string
+          maxLength: 5000
+        includeScreenshots:
+          type: boolean
+          default: false
+
+    OsintEvidenceResult:
+      type: object
+      properties:
+        evidenceItemId:
+          type: string
+          format: uuid
+        hashSha256:
+          type: string
+        exportUri:
+          type: string
+          format: uri

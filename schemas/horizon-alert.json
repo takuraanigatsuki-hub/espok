@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-alert.json",
+  "title": "HorizonAlert",
+  "description": "Уведомление Horizon Intelligence (Serendipity, Ghost Link, MO Resonance, PRO)",
+  "type": "object",
+  "required": ["id", "caseId", "alertType", "severity", "title", "summary", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "alertType": {
+      "type": "string",
+      "enum": [
+        "serendipity",
+        "ghost_link",
+        "cooccurrence",
+        "mo_resonance",
+        "identity_hypothesis",
+        "recommended_action"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "title": { "type": "string", "maxLength": 500 },
+    "summary": { "type": "string", "maxLength": 5000 },
+    "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "peerCaseId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Смежное дело (Serendipity); раскрытие по POL-007"
+    },
+    "peerRegion": { "type": "string" },
+    "matchedHashType": {
+      "type": "string",
+      "enum": ["phone", "iban", "imei", "wallet", "hashFio", "plate", "inn"]
+    },
+    "ghostLinkPath": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nodeId": { "type": "string" },
+          "nodeType": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "moClusterId": { "type": "string", "examples": ["MO-2847"] },
+    "resonanceScore": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "recommendedRequestType": { "type": "string" },
+    "recommendedAgency": { "type": "string" },
+    "legalBasisRequired": { "type": "boolean", "default": true },
+    "acknowledged": { "type": "boolean", "default": false },
+    "acknowledgedBy": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

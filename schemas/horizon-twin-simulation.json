@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/horizon-twin-simulation.json",
+  "title": "TwinSimulation",
+  "description": "IDT — результат симуляции сценария расследования",
+  "type": "object",
+  "required": ["id", "caseId", "scenarioType", "inputParams", "predictedYield", "requestedBy", "createdAt"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "caseId": { "type": "string", "format": "uuid" },
+    "scenarioType": {
+      "type": "string",
+      "enum": ["CDR_REQUEST", "RFM_REQUEST", "FNS_REQUEST", "MVD_LOOKUP", "OSINT_SCAN", "COMBINED"]
+    },
+    "scenarioName": { "type": "string" },
+    "inputParams": { "type": "object" },
+    "predictedYield": {
+      "type": "object",
+      "properties": {
+        "newNodes": { "type": "integer" },
+        "newEdges": { "type": "integer" },
+        "ghostLinksConfirmed": { "type": "integer" }
+      }
+    },
+    "deadlineImpact": {
+      "type": "object",
+      "properties": {
+        "slaHours": { "type": "number" },
+        "riskDaysToDeadline": { "type": "integer" },
+        "overallScore": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "requestedBy": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

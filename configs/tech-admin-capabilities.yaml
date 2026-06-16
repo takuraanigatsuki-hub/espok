@@ -1,0 +1,111 @@
+# Реестр возможностей Tech Admin Console
+# Версия: 1.0 — см. docs/technical/tech-admin-console.md
+
+version: "1.0"
+service: tech-admin-console
+phase: 1
+
+principles:
+  - no_case_content_access
+  - worm_config_audit
+  - dual_control_critical_changes
+  - abac_pol_008
+
+roles:
+  - id: TECH_ADMIN
+    name: Технический администратор
+    agency: Минцифры / ЦОД
+    contour: administrative
+    requires_hardware_token: true
+
+capabilities:
+  - id: SVC
+    code: service_health_monitor
+    name: Service Health Monitor
+    name_ru: Мониторинг сервисов
+    summary: Статус микросервисов, SLA, алерты, метрики Prometheus
+    schema: schemas/admin-service-status.json
+    api_path: /admin/services
+    kafka_topic: admin.service.health
+    db_table: admin_service_snapshots
+    policies: [POL-008]
+
+  - id: USR
+    code: user_role_provisioning
+    name: User & Role Provisioning
+    name_ru: Учётные записи и роли
+    summary: Создание, блокировка УЗ, назначение ролей (согласование ADMIN)
+    schema: schemas/admin-user-provision.json
+    api_path: /admin/users
+    kafka_topic: admin.user.provisioned
+    db_table: admin_user_provisions
+    policies: [POL-008, POL-009]
+
+  - id: INT
+    code: integration_smev_admin
+    name: Integration & SMEV Admin
+    name_ru: Интеграции и СМЭВ
+    summary: Адаптеры ведомств, mTLS-сертификаты, статус очередей
+    schema: schemas/admin-integration-adapter.json
+    api_path: /admin/integrations
+    kafka_topic: admin.integration.status
+    db_table: admin_integration_adapters
+    policies: [POL-008, POL-012]
+
+  - id: CFG
+    code: feature_flags_regional
+    name: Feature Flags & Regional Config
+    name_ru: Feature flags и регионы
+    summary: Включение функций по регионам, rate limits, pilot toggles
+    schema: schemas/admin-feature-flag.json
+    api_path: /admin/feature-flags
+    kafka_topic: admin.config.changed
+    db_table: admin_feature_flags
+    policies: [POL-008, POL-014]
+
+  - id: OSW
+    code: osint_worker_pool_admin
+    name: OSINT Worker Pool Admin
+    name_ru: Администрирование OSINT Worker
+    summary: Whitelist модулей SpiderFoot, масштаб Worker Pool, proxy policy
+    schema: schemas/admin-osint-config.json
+    api_path: /admin/osint/config
+    config_ref: configs/osint-module-whitelist.yaml
+    kafka_topic: admin.osint.config
+    db_table: admin_osint_config
+    policies: [POL-010]
+    phase: 2
+
+  - id: HZM
+    code: horizon_platform_admin
+    name: Horizon Platform Admin
+    name_ru: Администрирование Horizon
+    summary: Вкл/выкл модулей SE–FIR, обслуживание Bloom-индекса
+    schema: schemas/admin-horizon-config.json
+    api_path: /admin/horizon/modules
+    config_ref: configs/horizon-modules.yaml
+    kafka_topic: admin.horizon.config
+    db_table: admin_horizon_config
+    policies: [POL-011]
+    phase: 2
+
+  - id: OPS
+    code: operations_retention
+    name: Operations & Retention
+    name_ru: Операции и retention
+    summary: Purge TTL, ротация ключей Vault, окна обслуживания
+    schema: schemas/admin-ops-job.json
+    api_path: /admin/ops/jobs
+    kafka_topic: admin.ops.job
+    db_table: admin_ops_jobs
+    policies: [POL-013]
+    phase: 2
+
+maintenance:
+  schema: schemas/admin-maintenance-window.json
+  api_path: /admin/ops/maintenance-windows
+  db_table: admin_maintenance_windows
+
+audit:
+  table: admin_config_audit
+  siem_topic: admin.audit

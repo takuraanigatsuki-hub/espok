@@ -1,0 +1,17 @@
+{
+  "name": "epsok-demo",
+  "private": true,
+  "description": "Демонстрационный прототип ЕПСОК",
+  "scripts": {
+    "start": "npx serve public -p 3000 -c serve.json",
+    "demo": "npx serve public -p 3000 -c serve.json",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "deploy:ftp": "node deploy-public-ftp.mjs",
+    "deploy:htaccess": "node deploy-htaccess-ftp.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}

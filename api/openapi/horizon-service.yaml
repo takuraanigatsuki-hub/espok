@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: ЕПСОК Horizon Intelligence API
+  description: |
+    API семи модулей Horizon Intelligence Layer.
+    Реестр: configs/horizon-modules.yaml · RBAC: POL-007
+  version: 1.0.0
+
+servers:
+  - url: https://api.epsok.gov.ru/v1
+
+security:
+  - bearerAuth: []
+  - mtls: []
+
+tags:
+  - name: SE
+    description: Serendipity Engine
+  - name: GLD
+    description: Ghost Link Detector
+  - name: TCR
+    description: Temporal Co-occurrence Reconstructor
+  - name: MORM
+    description: MO Resonance Matcher
+  - name: IDT
+    description: Investigation Digital Twin
+  - name: PRO
+    description: Predictive Request Orchestrator
+  - name: FIR
+    description: Federated Identity Resolution
+
+paths:
+  /cases/{caseId}/horizon/run:
+    post:
+      summary: Запустить pipeline Horizon (все или выбранные модули)
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                modules:
+                  type: array
+                  items:
+                    type: string
+                    enum: [SE, GLD, TCR, MORM, IDT, PRO, FIR]
+      responses:
+        '202':
+          description: Pipeline accepted
+
+  /cases/{caseId}/horizon/serendipity:
+    get:
+      tags: [SE]
+      summary: Serendipity alerts по делу
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SerendipityAlert'
+
+  /cases/{caseId}/horizon/serendipity/{alertId}/reveal:
+    post:
+      tags: [SE]
+      summary: Запрос раскрытия peer case (POL-007)
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Запрос отправлен на согласование
+
+  /cases/{caseId}/horizon/ghost-links:
+    get:
+      tags: [GLD]
+      summary: Ghost Link hypotheses
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GhostLinkHypothesis'
+    post:
+      tags: [GLD]
+      summary: Пересчитать ghost links
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '202':
+          description: Scan started
+
+  /cases/{caseId}/horizon/cooccurrence:
+    get:
+      tags: [TCR]
+      summary: Co-occurrence timeline
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CooccurrenceEvent'
+
+  /cases/{caseId}/horizon/mo-resonance:
+    get:
+      tags: [MORM]
+      summary: MO Resonance results
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MOResonanceResult'
+
+  /cases/{caseId}/horizon/twin/simulate:
+    post:
+      tags: [IDT]
+      summary: Investigation Digital Twin simulation
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scenarios:
+                  type: array
+                  items:
+                    type: string
+                    enum: [CDR_REQUEST, RFM_REQUEST, FNS_REQUEST, MVD_LOOKUP, OSINT_SCAN]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TwinSimulation'
+
+  /cases/{caseId}/horizon/recommendations:
+    get:
+      tags: [PRO]
+      summary: Recommended actions (ranked)
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecommendedAction'
+    post:
+      tags: [PRO]
+      summary: Принять рекомендацию → создать черновик межвед запроса
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recommendationId]
+              properties:
+                recommendationId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Interagency request draft created
+
+  /cases/{caseId}/horizon/identity:
+    get:
+      tags: [FIR]
+      summary: Identity hypotheses
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentityHypothesis'
+    post:
+      tags: [FIR]
+      summary: Подтвердить/отклонить гипотезу личности
+      parameters:
+        - $ref: '#/components/parameters/caseId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hypothesisId, decision]
+              properties:
+                hypothesisId:
+                  type: string
+                  format: uuid
+                decision:
+                  type: string
+                  enum: [confirmed, rejected]
+                confirmationMethod:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    mtls:
+      type: mutualTLS
+
+  parameters:
+    caseId:
+      name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    SerendipityAlert:
+      $ref: '../../schemas/horizon-serendipity-alert.json'
+    GhostLinkHypothesis:
+      $ref: '../../schemas/horizon-ghost-link.json'
+    CooccurrenceEvent:
+      $ref: '../../schemas/horizon-cooccurrence.json'
+    MOResonanceResult:
+      $ref: '../../schemas/horizon-mo-resonance.json'
+    TwinSimulation:
+      $ref: '../../schemas/horizon-twin-simulation.json'
+    RecommendedAction:
+      $ref: '../../schemas/horizon-recommended-action.json'
+    IdentityHypothesis:
+      $ref: '../../schemas/horizon-identity-hypothesis.json'

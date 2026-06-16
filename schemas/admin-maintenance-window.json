@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epsok.gov.ru/schemas/admin-maintenance-window.json",
+  "title": "AdminMaintenanceWindow",
+  "description": "Окно обслуживания платформы",
+  "type": "object",
+  "required": ["id", "startsAt", "endsAt", "scope", "status"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "title": { "type": "string" },
+    "startsAt": { "type": "string", "format": "date-time" },
+    "endsAt": { "type": "string", "format": "date-time" },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "services": { "type": "array", "items": { "type": "string" } },
+        "regions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "status": { "type": "string", "enum": ["planned", "active", "completed", "cancelled"] },
+    "notifyUsers": { "type": "boolean", "default": true },
+    "createdBy": { "type": "string", "format": "uuid" }
+  }
+}

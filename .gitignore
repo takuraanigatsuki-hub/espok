@@ -1,0 +1,11 @@
+﻿node_modules/
+.DS_Store
+*.log
+.env
+.env.*
+demo/public/.htpasswd
+dist/
+build/
+.cache/
+docs/presentation/node_modules/
+.idea/

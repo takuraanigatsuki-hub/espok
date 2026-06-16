@@ -1,0 +1,124 @@
+# Реестр модулей Horizon Intelligence Layer
+# Версия: 1.0 — см. docs/technical/horizon-intelligence.md
+
+version: "1.0"
+service: horizon-intelligence
+phase: 3
+
+principles:
+  - zero_citizen_database
+  - legal_basis_required
+  - audit_worm
+  - abac_pol_007
+
+modules:
+  - id: SE
+    code: serendipity_engine
+    name: Serendipity Engine
+    name_ru: Движок Serendipity
+    summary: Федеральное обнаружение совпадений hash между активными делами
+    schema: schemas/horizon-serendipity-alert.json
+    kafka_topic: horizon.serendipity.detected
+    api_path: /horizon/serendipity
+    inputs: [case_fingerprints, graph_node_added]
+    outputs: [SerendipityAlert]
+    db_table: horizon_alerts
+    alert_type: serendipity
+
+  - id: GLD
+    code: ghost_link_detector
+    name: Ghost Link Detector
+    name_ru: Детектор скрытых связей
+    summary: Поиск путей через номиналов и посредников (bounded graph search, depth 4)
+    schema: schemas/horizon-ghost-link.json
+    kafka_topic: horizon.ghostlink.hypothesis
+    api_path: /horizon/ghost-links
+    inputs: [link_graph, interagency_responses, osint_findings]
+    outputs: [GhostLinkHypothesis]
+    db_table: horizon_ghost_links
+    alert_type: ghost_link
+
+  - id: TCR
+    code: temporal_cooccurrence_reconstructor
+    name: Temporal Co-occurrence Reconstructor
+    name_ru: Реконструктор временных пересечений
+    summary: Хронология пересечений на данных CDR, РФМ, камер (только по запросу)
+    schema: schemas/horizon-cooccurrence.json
+    kafka_topic: horizon.cooccurrence.event
+    api_path: /horizon/cooccurrence
+    inputs: [interagency_fulfilled, evidence_timeline]
+    outputs: [CooccurrenceEvent]
+    db_table: horizon_cooccurrence_events
+    alert_type: cooccurrence
+
+  - id: MORM
+    code: mo_resonance_matcher
+    name: MO Resonance Matcher
+    name_ru: Сопоставление с MO-шаблонами
+    summary: Subgraph matching с обезличенными федеральными MO-кластерами
+    schema: schemas/horizon-mo-resonance.json
+    kafka_topic: horizon.mo.resonance
+    api_path: /horizon/mo-resonance
+    inputs: [link_graph, mo_template_library]
+    outputs: [MOResonanceResult]
+    db_table: horizon_mo_resonance
+    alert_type: mo_resonance
+
+  - id: IDT
+    code: investigation_digital_twin
+    name: Investigation Digital Twin
+    name_ru: Цифровой двойник расследования
+    summary: Симуляция «что если» для межвед запросов и влияния на сроки УПК
+    schema: schemas/horizon-twin-simulation.json
+    kafka_topic: horizon.twin.completed
+    api_path: /horizon/twin/simulate
+    inputs: [case_graph, deadlines, pending_requests, mo_resonance]
+    outputs: [TwinSimulation]
+    db_table: horizon_twin_simulations
+    alert_type: null
+
+  - id: PRO
+    code: predictive_request_orchestrator
+    name: Predictive Request Orchestrator
+    name_ru: Оркестратор прогнозных запросов
+    summary: Ранжирование следующих легальных межвед запросов (не авто-отправка)
+    schema: schemas/horizon-recommended-action.json
+    kafka_topic: horizon.action.recommended
+    api_path: /horizon/recommendations
+    inputs: [link_graph, twin_simulations, ghost_links, deadlines]
+    outputs: [RecommendedAction]
+    db_table: horizon_recommended_actions
+    alert_type: recommended_action
+
+  - id: FIR
+    code: federated_identity_resolution
+    name: Federated Identity Resolution
+    name_ru: Федеративное разрешение личности
+    summary: Гипотеза «тот же человек» через hash + ГИАЦ без центральной базы ФИО
+    schema: schemas/horizon-identity-hypothesis.json
+    kafka_topic: horizon.identity.hypothesis
+    api_path: /horizon/identity
+    inputs: [hash_fio, giac_responses, serendipity_matches]
+    outputs: [IdentityHypothesis]
+    db_table: horizon_identity_hypotheses
+    alert_type: identity_hypothesis
+
+pipeline:
+  # Порядок вызова при обновлении графа дела
+  on_graph_update:
+    - SE
+    - GLD
+    - MORM
+    - TCR
+    - IDT
+    - PRO
+    - FIR
+
+limits:
+  serendipity_bloom_check_ms: 500
+  ghost_link_max_depth: 4
+  ghost_link_max_paths: 20
+  mo_resonance_min_score: 60
+  twin_max_scenarios_per_run: 10
+  pro_max_recommendations: 5
+  fir_min_confidence: 70
