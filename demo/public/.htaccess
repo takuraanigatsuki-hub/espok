@@ -6,15 +6,16 @@
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
-# Одноразовая установка БД: /api/setup.php доступен по setup_token без Basic Auth
-SetEnvIf Request_URI "^/api/setup\.php" allow_public_setup=1
+# /api/ и /console/ — собственная авторизация приложения, без HTTP Basic Auth
+SetEnvIf Request_URI "^/api/" skip_basic_auth=1
+SetEnvIf Request_URI "^/console/" skip_basic_auth=1
 
 AuthType Basic
 AuthName "EPSOK Demo"
 AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
 
 <RequireAny>
-  Require env allow_public_setup
+  Require env skip_basic_auth
   Require valid-user
 </RequireAny>
 

@@ -44,13 +44,14 @@ jobs:
           python3 demo/setup-db-pma.py | tee setup-result.json
           grep -q '"ok": true' setup-result.json
 
-      - name: Verify deploy artifacts exist on FTP
-        env:
-          FTP_PASS: J0y2PZha00cDRw5C
+      - name: Verify public assets on production
         run: |
-          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/" | tee ftp-root.txt
-          grep -q 'app.js' ftp-root.txt
-          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/api/" | tee ftp-api.txt
-          grep -q 'setup.php' ftp-api.txt
-          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/console/" | tee ftp-console.txt
-          grep -q 'index.html' ftp-console.txt
+          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/epsok-mark.svg)
+          test "$svg_len" -gt 500
+          console_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console/)
+          test "$console_code" = "200" -o "$console_code" = "301" -o "$console_code" = "302"
+          api_code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"siteadmin","password":"wrong"}' \
+            https://epsok.ru/api/admin/login.php)
+          test "$api_code" = "401" -o "$api_code" = "403"

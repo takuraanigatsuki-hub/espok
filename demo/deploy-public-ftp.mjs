@@ -23,6 +23,7 @@ if (!PASS) {
 const hosts = [process.env.FTP_HOST || '31.31.197.50', 'server299.hosting.reg.ru'];
 const remoteRoots = ['/'];
 const passEnc = encodeURIComponent(PASS);
+const baseUrl = (host) => `ftp://${encodeURIComponent(USER)}:${passEnc}@${host}`;
 
 function walk(dir) {
   const out = [];
@@ -35,6 +36,20 @@ function walk(dir) {
   return out;
 }
 
+function uploadFile(host, remote, localPath) {
+  const localSize = fs.statSync(localPath).size;
+  if (localSize === 0) {
+    throw new Error(`Refusing to upload empty local file: ${localPath}`);
+  }
+  const url = `${baseUrl(host)}${remote}`;
+  // Remove corrupted zero-byte leftovers before upload
+  execSync(`${CURL} -sS --quote "DELE ${remote}" "${baseUrl(host)}/"`, { stdio: 'pipe', timeout: 60000 });
+  execSync(
+    `${CURL} -sS --ftp-create-dirs --connect-timeout 30 --max-time 300 -T "${localPath}" "${url}"`,
+    { stdio: 'pipe', timeout: 360000 }
+  );
+}
+
 const files = walk(LOCAL_DIR);
 let uploaded = 0;
 
@@ -45,15 +60,11 @@ for (const host of hosts) {
       const rel = path.relative(LOCAL_DIR, local).split(path.sep).join('/');
       const remote = `${root}/${rel}`.replace(/\/+/g, '/');
       const localPath = local.replace(/\\/g, '/');
-      const url = `ftp://${encodeURIComponent(USER)}:${passEnc}@${host}${remote}`;
       try {
-        execSync(
-          `${CURL} -sS --ftp-create-dirs --connect-timeout 30 --max-time 300 -T "${localPath}" "${url}"`,
-          { stdio: 'pipe', timeout: 360000 }
-        );
+        uploadFile(host, remote, localPath);
         ok++;
         uploaded++;
-        process.stdout.write(`  ↑ ${rel}\n`);
+        process.stdout.write(`  ↑ ${rel} (${fs.statSync(localPath).size} B)\n`);
       } catch (e) {
         const err = e.stderr?.toString() || e.message;
         console.error(`fail ${rel} @ ${host}:`, err.slice(0, 200));
