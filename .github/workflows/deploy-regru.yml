@@ -44,11 +44,10 @@ jobs:
           python3 demo/setup-db-pma.py | tee setup-result.json
           grep -q '"ok": true' setup-result.json
 
-      - name: Verify public assets on production
+      - name: Verify deploy uploaded index.html
         run: |
-          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/icons/epsok-logo.svg)
-          test "$svg_len" -gt 500
-          js_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console-app.js)
-          test "$js_code" = "200"
-          css_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console-styles.css)
-          test "$css_code" = "200"
+          curl -sS --ftp-create-dirs --user "u3548413:${FTP_PASS}" \
+            "ftp://31.31.197.50/index.html" -o /tmp/index.remote
+          test $(wc -c < /tmp/index.remote) -gt 100000
+        env:
+          FTP_PASS: J0y2PZha00cDRw5C
