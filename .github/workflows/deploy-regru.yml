@@ -51,5 +51,9 @@ jobs:
           test $(wc -c < /tmp/index.remote) -gt 100000
           grep -q 'background-image: url("data:image/svg+xml' /tmp/index.remote
           grep -q 'class="login-logo"' /tmp/index.remote
+          curl -sS --ftp-create-dirs --user "u3548413:${FTP_PASS}" \
+            "ftp://31.31.197.50/console.html" -o /tmp/console.remote
+          test $(wc -c < /tmp/console.remote) -gt 5000
+          grep -q 'console-app.js' /tmp/console.remote
         env:
           FTP_PASS: J0y2PZha00cDRw5C

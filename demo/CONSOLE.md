@@ -4,7 +4,7 @@
 
 ## URL
 
-- Консоль: `https://epsok.ru/console/`
+- Консоль: `https://epsok.ru/console` или `https://epsok.ru/console.html`
 - API: `https://epsok.ru/api/`
 
 ## Первый запуск на хостинге
@@ -19,7 +19,7 @@
    ```
    https://epsok.ru/api/setup.php?token=ВАШ_SETUP_TOKEN
    ```
-5. Войдите в консоль: `https://epsok.ru/console/`  
+5. Войдите в консоль: `https://epsok.ru/console`  
    Логин по умолчанию: `siteadmin` (пароль из `bootstrap_admin` в config).
 
 6. **Смените** `setup_token` и пароль супер-админа после установки.

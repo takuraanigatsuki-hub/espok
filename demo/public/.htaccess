@@ -1,5 +1,8 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  # Site Admin: REG.RU nginx не отдаёт /console/ как каталог — открываем корневой console.html
+  RewriteRule ^console/?$ console.html [L]
+  RewriteRule ^console/index\.html$ console.html [R=301,L]
   # REG.RU / nginx+Apache: принудительный HTTPS (дублирует настройку ISPmanager)
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
