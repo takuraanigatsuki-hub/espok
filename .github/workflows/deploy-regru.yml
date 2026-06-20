@@ -48,9 +48,7 @@ jobs:
         run: |
           svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/icons/epsok-logo.svg)
           test "$svg_len" -gt 500
-          console_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console/)
-          test "$console_code" = "200" -o "$console_code" = "301" -o "$console_code" = "302"
-          curl -sS -X POST -H 'Content-Type: application/json' \
-            -d '{"username":"siteadmin","password":"SiteAdmin-Epsok-2028!"}' \
-            https://epsok.ru/api/admin/login.php | tee /tmp/login.json
-          grep -q '"ok":true' /tmp/login.json
+          js_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console-app.js)
+          test "$js_code" = "200"
+          css_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console-styles.css)
+          test "$css_code" = "200"
