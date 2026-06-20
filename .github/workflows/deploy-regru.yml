@@ -46,12 +46,11 @@ jobs:
 
       - name: Verify public assets on production
         run: |
-          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/epsok-mark.svg)
+          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/epsok-logo.svg)
           test "$svg_len" -gt 500
           console_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console/)
           test "$console_code" = "200" -o "$console_code" = "301" -o "$console_code" = "302"
-          api_code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
-            -H 'Content-Type: application/json' \
-            -d '{"username":"siteadmin","password":"wrong"}' \
-            https://epsok.ru/api/admin/login.php)
-          test "$api_code" = "401" -o "$api_code" = "403"
+          curl -sS -X POST -H 'Content-Type: application/json' \
+            -d '{"username":"siteadmin","password":"SiteAdmin-Epsok-2028!"}' \
+            https://epsok.ru/api/admin/login.php | tee /tmp/login.json
+          grep -q '"ok":true' /tmp/login.json

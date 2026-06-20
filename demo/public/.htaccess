@@ -6,18 +6,14 @@
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
-# /api/ и /console/ — собственная авторизация приложения, без HTTP Basic Auth
-SetEnvIf Request_URI "^/api/" skip_basic_auth=1
-SetEnvIf Request_URI "^/console/" skip_basic_auth=1
-
-AuthType Basic
-AuthName "EPSOK Demo"
-AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
-
-<RequireAny>
-  Require env skip_basic_auth
+# HTTP Basic Auth только для главной страницы демо.
+# /console/ и /api/ используют собственную авторизацию приложения.
+<Files "index.html">
+  AuthType Basic
+  AuthName "EPSOK Demo"
+  AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
   Require valid-user
-</RequireAny>
+</Files>
 
 <Files ".htpasswd">
   Require all denied
@@ -39,5 +35,8 @@ AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
   <FilesMatch "\.(html?)$">
     Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
     Header always set Pragma "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.svg$">
+    Header always set Cache-Control "public, max-age=3600"
   </FilesMatch>
 </IfModule>

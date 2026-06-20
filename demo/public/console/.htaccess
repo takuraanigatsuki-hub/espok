@@ -1,3 +1,0 @@
-# Консоль использует собственную авторизацию (siteadmin), без HTTP Basic Auth
-AuthType None
-Require all granted
