@@ -137,7 +137,7 @@ def verify(session: requests.Session) -> int:
         'token': token,
         'is_bootstrap': '1',
         'db': DB_NAME,
-        'sql_query': 'SELECT COUNT(*) AS c FROM epsok_users;',
+        'sql_query': 'SELECT username FROM epsok_users ORDER BY username;',
         'ajax_request': 'true',
     }
     resp = session.post(
@@ -152,7 +152,7 @@ def verify(session: requests.Session) -> int:
     match = re.search(r'\((\d+)\s+total', message)
     if match:
         return int(match.group(1))
-    return len(re.findall(r'class="data grid_edit', message))
+    return len(re.findall(r'class="data grid_edit click2 not_null text pre_wrap"', message))
 
 
 def main() -> int:
