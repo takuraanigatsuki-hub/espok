@@ -42,8 +42,11 @@ function uploadFile(host, remote, localPath) {
     throw new Error(`Refusing to upload empty local file: ${localPath}`);
   }
   const url = `${baseUrl(host)}${remote}`;
-  // Remove corrupted zero-byte leftovers before upload
-  execSync(`${CURL} -sS --quote "DELE ${remote}" "${baseUrl(host)}/"`, { stdio: 'pipe', timeout: 60000 });
+  try {
+    execSync(`${CURL} -sS --quote "DELE ${remote}" "${baseUrl(host)}/"`, { stdio: 'pipe', timeout: 60000 });
+  } catch {
+    // File may not exist yet — safe to ignore before STOR
+  }
   execSync(
     `${CURL} -sS --ftp-create-dirs --connect-timeout 30 --max-time 300 -T "${localPath}" "${url}"`,
     { stdio: 'pipe', timeout: 360000 }
