@@ -1,0 +1,8 @@
+<Files "config.local.php">
+  Require all denied
+</Files>
+
+<IfModule mod_headers.c>
+  Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=!SKIP_API_CACHE
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>

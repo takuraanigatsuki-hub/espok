@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>ЕПСОК · Site Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1.0.0">
+</head>
+<body>
+  <div id="login-view" class="view active">
+    <div class="login-card">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true" width="40" height="40"><rect width="32" height="32" rx="7" fill="#001126"/><circle cx="16" cy="16" r="11.5" stroke="#0061D9" stroke-width="1" opacity="0.42"/><path d="M24 9.2 A 11.5 11.5 0 0 0 9.5 13.5" stroke="#0061D9" stroke-width="1.05" opacity="0.38"/><path d="M16 16 L23.2 9.8" stroke="#0061D9" stroke-width="1.35" stroke-linecap="round" opacity="0.72"/><circle cx="21.8" cy="10.8" r="1.25" fill="#0061D9"/><circle cx="16" cy="16" r="9.2" stroke="#ffffff" stroke-width="1.15"/><circle cx="16" cy="8.2" r="1.1" fill="#ffffff"/><path d="M16 10.8 L11.8 16.2 L13.4 17.6 L16 13.8 L18.6 17.6 L20.2 16.2 Z" fill="#ffffff"/><path d="M17.2 11.6 L19.4 11.1 L18.8 12.4 Z" fill="#ffffff"/><path d="M10.8 20.8 Q16 18.2 21.2 20.8 L20.4 21.6 Q16 19.4 11.6 21.6 Z" fill="#ffffff"/><path d="M14.2 21.8 L16 20.2 L17.8 21.8" stroke="#001126" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/><rect x="14.6" y="22.4" width="2.8" height="1.6" rx="0.3" fill="#ffffff"/></svg>
+        <div>
+          <h1>Site Admin</h1>
+          <p>Консоль управления epsok.ru</p>
+        </div>
+      </div>
+      <form id="login-form">
+        <label>
+          <span>Логин</span>
+          <input type="text" id="login-user" autocomplete="username" required>
+        </label>
+        <label>
+          <span>Пароль</span>
+          <input type="password" id="login-pass" autocomplete="current-password" required>
+        </label>
+        <p class="error hidden" id="login-error"></p>
+        <button type="submit" class="btn-primary">Войти</button>
+      </form>
+      <p class="hint muted">Супер-админ создаётся через <code>/api/setup.php</code></p>
+    </div>
+  </div>
+
+  <div id="app-view" class="view">
+    <header class="topbar">
+      <div class="topbar-left">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true" width="28" height="28"><rect width="32" height="32" rx="7" fill="#001126"/><circle cx="16" cy="16" r="11.5" stroke="#0061D9" stroke-width="1" opacity="0.42"/><path d="M24 9.2 A 11.5 11.5 0 0 0 9.5 13.5" stroke="#0061D9" stroke-width="1.05" opacity="0.38"/><path d="M16 16 L23.2 9.8" stroke="#0061D9" stroke-width="1.35" stroke-linecap="round" opacity="0.72"/><circle cx="21.8" cy="10.8" r="1.25" fill="#0061D9"/><circle cx="16" cy="16" r="9.2" stroke="#ffffff" stroke-width="1.15"/><circle cx="16" cy="8.2" r="1.1" fill="#ffffff"/><path d="M16 10.8 L11.8 16.2 L13.4 17.6 L16 13.8 L18.6 17.6 L20.2 16.2 Z" fill="#ffffff"/><path d="M17.2 11.6 L19.4 11.1 L18.8 12.4 Z" fill="#ffffff"/><path d="M10.8 20.8 Q16 18.2 21.2 20.8 L20.4 21.6 Q16 19.4 11.6 21.6 Z" fill="#ffffff"/><path d="M14.2 21.8 L16 20.2 L17.8 21.8" stroke="#001126" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/><rect x="14.6" y="22.4" width="2.8" height="1.6" rx="0.3" fill="#ffffff"/></svg>
+        <strong>Site Admin</strong>
+        <span class="muted" id="admin-label"></span>
+      </div>
+      <div class="topbar-right">
+        <a href="../" class="btn-sm">← К демо</a>
+        <button type="button" class="btn-sm" id="logout-btn">Выйти</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <nav class="side-nav">
+        <button type="button" class="nav-btn active" data-panel="users">Пользователи</button>
+        <button type="button" class="nav-btn" data-panel="audit">Журнал</button>
+        <button type="button" class="nav-btn" data-panel="help">Справка</button>
+      </nav>
+
+      <section class="panel active" id="panel-users">
+        <div class="panel-head">
+          <h2>Учётные записи</h2>
+          <button type="button" class="btn-primary btn-sm-inline" id="new-user-btn">+ Новый пользователь</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Логин</th>
+                <th>Имя</th>
+                <th>Persona</th>
+                <th>Активен</th>
+                <th>Админ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-audit">
+        <div class="panel-head"><h2>Журнал действий</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Время</th><th>Кто</th><th>Действие</th><th>Объект</th><th>IP</th></tr>
+            </thead>
+            <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-help">
+        <h2>Справка</h2>
+        <ul class="help-list">
+          <li>Первый запуск: скопируйте <code>api/config.local.php.example</code> → <code>api/config.local.php</code></li>
+          <li>Выполните <code>/api/setup.php?token=...</code> один раз</li>
+          <li>Войдите супер-админом (по умолчанию <code>siteadmin</code>)</li>
+          <li>Демо-пользователи входят на главной через <code>/api/auth/login.php</code></li>
+          <li>ISPmanager нужен только для DNS, SSL и тарифа</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="user-modal">
+    <div class="modal-card">
+      <h3 id="user-modal-title">Новый пользователь</h3>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <label><span>Логин</span><input type="text" id="f-username" required pattern="[a-z0-9._-]+"></label>
+        <label><span>Пароль</span><input type="password" id="f-password" minlength="8" placeholder="мин. 8 символов"></label>
+        <label><span>Отображаемое имя</span><input type="text" id="f-display" required></label>
+        <label><span>Контур / подпись</span><input type="text" id="f-contour"></label>
+        <label><span>Persona ID</span>
+          <select id="f-persona" required></select>
+        </label>
+        <label class="check"><input type="checkbox" id="f-switch"> Переключение ролей в демо</label>
+        <label class="check"><input type="checkbox" id="f-active" checked> Активен</label>
+        <label class="check"><input type="checkbox" id="f-super"> Супер-админ консоли</label>
+        <p class="error hidden" id="user-form-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-sm" id="user-cancel">Отмена</button>
+          <button type="submit" class="btn-primary btn-sm-inline">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js?v=1.0.0"></script>
+</body>
+</html>

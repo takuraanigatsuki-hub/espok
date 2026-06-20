@@ -1,15 +1,22 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  # Site Admin: REG.RU nginx не отдаёт /console/ как каталог — открываем корневой console.html
+  RewriteRule ^console/?$ console.html [L]
+  RewriteRule ^console/index\.html$ console.html [R=301,L]
   # REG.RU / nginx+Apache: принудительный HTTPS (дублирует настройку ISPmanager)
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
-AuthType Basic
-AuthName "EPSOK Demo"
-AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
-Require valid-user
+# HTTP Basic Auth только для главной страницы демо.
+# /console/ и /api/ используют собственную авторизацию приложения.
+<Files "index.html">
+  AuthType Basic
+  AuthName "EPSOK Demo"
+  AuthUserFile /var/www/u3548413/data/www/epsok.ru/.htpasswd
+  Require valid-user
+</Files>
 
 <Files ".htpasswd">
   Require all denied
@@ -31,5 +38,8 @@ Require valid-user
   <FilesMatch "\.(html?)$">
     Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
     Header always set Pragma "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.svg$">
+    Header always set Cache-Control "public, max-age=3600"
   </FilesMatch>
 </IfModule>

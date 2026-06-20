@@ -21,12 +21,23 @@
   const TOKEN_CACHE_PERSIST_KEY = 'epsok-session-token-persistent';
   const DEMO_HTTP_PREFIX = 'epsok:demo:http:';
 
-  const ALLOWED_USERS = Object.freeze({
-    'ivanov.sp': 1,
-    'sidorov.av': 1,
-    'kozlov.va': 1,
-    'takura.anigatsuki': 1
-  });
+  const BUILTIN_USERS = new Set([
+    'ivanov.sp',
+    'sidorov.av',
+    'kozlov.va',
+    'takura.anigatsuki'
+  ]);
+  const registeredUsers = new Set();
+
+  function isAllowedUser(username) {
+    const u = String(username || '').toLowerCase();
+    return BUILTIN_USERS.has(u) || registeredUsers.has(u);
+  }
+
+  function registerAllowedUser(username) {
+    const u = String(username || '').toLowerCase();
+    if (u) registeredUsers.add(u);
+  }
 
   const enc = new TextEncoder();
   const dec = new TextDecoder();
@@ -239,7 +250,7 @@
     if (!raw || !raw.startsWith(DEMO_HTTP_PREFIX)) return null;
     try {
       const box = JSON.parse(dec.decode(b64ToBuf(raw.slice(DEMO_HTTP_PREFIX.length))));
-      if (box.v !== SESSION_VERSION || !box.u || !ALLOWED_USERS[box.u]) return null;
+      if (box.v !== SESSION_VERSION || !box.u || !isAllowedUser(box.u)) return null;
       if (!box.exp || Date.now() > box.exp) return null;
       const token = loadCachedToken(box.u);
       if (!token || token !== box.token) return null;
@@ -325,7 +336,7 @@
     } catch {
       return null;
     }
-    if (env.v !== SESSION_VERSION || !env.u || !ALLOWED_USERS[env.u]) return null;
+    if (env.v !== SESSION_VERSION || !env.u || !isAllowedUser(env.u)) return null;
     if (!env.exp || Date.now() > env.exp) return null;
 
     const token = loadCachedToken(env.u);
@@ -429,7 +440,7 @@
       const env = JSON.parse(dec.decode(b64ToBuf(raw.slice(SESSION_PREFIX.length))));
       const valid = env.v === SESSION_VERSION
         && env.u
-        && ALLOWED_USERS[env.u]
+        && isAllowedUser(env.u)
         && env.exp
         && Date.now() < env.exp
         && !!loadCachedToken(env.u);
@@ -557,7 +568,9 @@
     initRuntimeGuards,
     bindConfidentialCopyAudit,
     getSecurityProfile,
-    setPrivacyVeil
+    setPrivacyVeil,
+    registerAllowedUser,
+    isAllowedUser
   };
 
   global.escapeHtml = escapeHtml;

@@ -1,0 +1,22 @@
+<?php
+/**
+ * Скопируйте в config.local.php и заполните.
+ * config.local.php не должен попадать в git.
+ */
+return [
+    'db' => [
+        'host' => 'localhost',
+        'name' => 'u3548413_default',
+        'user' => 'u3548413_default',
+        'pass' => 'YOUR_DB_PASSWORD',
+        'charset' => 'utf8mb4',
+    ],
+    /** Одноразовый токен для /api/setup.php?token=... */
+    'setup_token' => 'change-me-before-deploy',
+    /** Логин/пароль первого супер-админа консоли (создаётся setup.php) */
+    'bootstrap_admin' => [
+        'username' => 'siteadmin',
+        'password' => 'ChangeMe-SiteAdmin-2028!',
+        'display_name' => 'Администратор сайта',
+    ],
+];

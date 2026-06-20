@@ -17,16 +17,17 @@ if (!PASS) {
   process.exit(1);
 }
 
-const hosts = [process.env.FTP_HOST || 'server299.hosting.reg.ru', '31.31.197.50'];
-const remotes = [`/www/${DOMAIN}/.htaccess`, `/data/www/${DOMAIN}/.htaccess`];
-const localWin = LOCAL.replace(/\\/g, '/');
+const hosts = [process.env.FTP_HOST || '31.31.197.50', 'server299.hosting.reg.ru'];
+const remotes = ['/.htaccess'];
+const localPath = LOCAL.replace(/\\/g, '/');
 const passEnc = encodeURIComponent(PASS);
+const CURL = process.platform === 'win32' ? 'curl.exe' : 'curl';
 
 for (const host of hosts) {
   for (const remote of remotes) {
     const url = `ftp://${encodeURIComponent(USER)}:${passEnc}@${host}${remote}`;
     try {
-      execSync(`curl.exe -sS --ftp-create-dirs -T "${localWin}" "${url}"`, { stdio: 'pipe', timeout: 60000 });
+      execSync(`${CURL} -sS --ftp-create-dirs --connect-timeout 30 --max-time 120 -T "${localPath}" "${url}"`, { stdio: 'pipe', timeout: 180000 });
       console.log(`OK: ${USER}@${host}${remote}`);
       process.exit(0);
     } catch (e) {

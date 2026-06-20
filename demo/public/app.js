@@ -66,16 +66,58 @@ const authUsers = {
   }
 };
 
+/** Пользователи, загруженные из MySQL через /api/auth/login.php */
+const apiAuthUsers = {};
+
+function registerApiAuthUser(username, profile) {
+  if (!username || !profile) return;
+  const key = String(username).toLowerCase();
+  apiAuthUsers[key] = {
+    personaId: profile.personaId,
+    displayName: profile.displayName,
+    contourLabel: profile.contourLabel || '',
+    canSwitchPersona: !!profile.canSwitchPersona
+  };
+  if (typeof EpsokSecurity !== 'undefined' && EpsokSecurity.registerAllowedUser) {
+    EpsokSecurity.registerAllowedUser(key);
+  }
+}
+
+function getAuthUser(username) {
+  if (!username) return null;
+  const key = String(username).toLowerCase();
+  return apiAuthUsers[key] || authUsers[key] || null;
+}
+
+async function apiAuthenticate(username, password) {
+  try {
+    const res = await fetch('/api/auth/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (res.status === 404 || res.status === 503) return null;
+    const data = await res.json();
+    if (!data.ok) {
+      return { ok: false, message: data.error || 'Неверный логин или пароль' };
+    }
+    registerApiAuthUser(username, data.user);
+    return { ok: true, user: getAuthUser(username) };
+  } catch {
+    return null;
+  }
+}
+
 const PRIVILEGED_PERSONA_IDS = Object.freeze(['TECH_ADMIN', 'FUNC_ADMIN', 'BETA_TAKURA']);
 
 function canSwitchDemoPersona(username = currentUser?.username) {
   if (!username) return false;
-  return !!authUsers[username]?.canSwitchPersona;
+  return !!getAuthUser(username)?.canSwitchPersona;
 }
 
 function canUsePersona(personaId, username = currentUser?.username) {
   if (!username || !demoPersonas[personaId]) return false;
-  const user = authUsers[username];
+  const user = getAuthUser(username);
   if (!user) return false;
   if (username === 'takura.anigatsuki') return true;
   if (personaId === user.personaId) return true;
@@ -86,7 +128,7 @@ function canUsePersona(personaId, username = currentUser?.username) {
 }
 
 function resolveAllowedPersonaId(personaId, username = currentUser?.username) {
-  const user = authUsers[username];
+  const user = getAuthUser(username);
   const fallback = user?.personaId || 'INV_MVD';
   if (personaId && canUsePersona(personaId, username)) return personaId;
   return fallback;
@@ -1996,7 +2038,7 @@ async function copyCaseReference(caseId) {
 async function isAuthenticated() {
   const session = await getStoredSession();
   if (!session?.username) return false;
-  const user = authUsers[session.username];
+  const user = getAuthUser(session.username);
   if (!user) {
     clearSession();
     return false;
@@ -2076,19 +2118,39 @@ async function submitLogin(e) {
   const remember = document.getElementById('login-remember')?.checked;
   const errEl = document.getElementById('login-error');
   const btn = document.getElementById('login-submit-btn');
-  const user = authUsers[username];
 
   if (btn) btn.disabled = true;
   try {
-    const auth = await EpsokSecurity.verifyPassword(password);
-    if (auth.locked && errEl) {
-      errEl.textContent = auth.message;
-      errEl.classList.remove('hidden');
-      return;
-    }
-    if (!user || !auth.ok) {
+    let user = getAuthUser(username);
+    const apiResult = await apiAuthenticate(username, password);
+    if (apiResult === null) {
+      const auth = await EpsokSecurity.verifyPassword(password);
+      if (auth.locked && errEl) {
+        errEl.textContent = auth.message;
+        errEl.classList.remove('hidden');
+        return;
+      }
+      user = getAuthUser(username);
+      if (!user || !auth.ok) {
+        if (errEl) {
+          errEl.textContent = 'Неверный логин или пароль. Для демо: ivanov.sp / epsok2028';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+    } else if (!apiResult.ok) {
       if (errEl) {
-        errEl.textContent = 'Неверный логин или пароль. Для демо: ivanov.sp / epsok2028';
+        errEl.textContent = apiResult.message || 'Неверный логин или пароль';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    } else {
+      user = apiResult.user;
+    }
+
+    if (!user) {
+      if (errEl) {
+        errEl.textContent = 'Неверный логин или пароль';
         errEl.classList.remove('hidden');
       }
       return;
@@ -3665,7 +3727,12 @@ function syncSidebarNavTitles() {
     if (label) item.title = label;
   });
   const corp = document.getElementById('sidebar-corp-mail');
-  if (corp) corp.title = 'Корпоративная почта';
+  if (corp && !corp.dataset.bound) {
+    corp.dataset.bound = '1';
+    corp.style.cursor = 'pointer';
+    corp.title = 'Корпоративная почта — открыть';
+    corp.addEventListener('click', () => openCorpMail());
+  }
 }
 
 function toggleSidebarCollapse() {

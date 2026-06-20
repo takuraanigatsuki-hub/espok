@@ -4,6 +4,7 @@
 .env
 .env.*
 demo/public/.htpasswd
+demo/public/api/config.local.php
 dist/
 build/
 .cache/
