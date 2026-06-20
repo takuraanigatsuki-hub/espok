@@ -46,7 +46,7 @@ jobs:
 
       - name: Verify public assets on production
         run: |
-          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/epsok-logo.svg)
+          svg_len=$(curl -sS -o /dev/null -w '%{size_download}' https://epsok.ru/icons/epsok-logo.svg)
           test "$svg_len" -gt 500
           console_code=$(curl -sS -o /dev/null -w '%{http_code}' https://epsok.ru/console/)
           test "$console_code" = "200" -o "$console_code" = "301" -o "$console_code" = "302"
