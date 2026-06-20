@@ -1,0 +1,51 @@
+name: Deploy to REG.RU
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/site-admin-console-7deb
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create production config.local.php
+        run: |
+          cat > demo/public/api/config.local.php <<'PHP'
+          <?php
+          return [
+              'db' => [
+                  'host' => 'localhost',
+                  'name' => 'u3548413_default',
+                  'user' => 'u3548413_default',
+                  'pass' => 'PG150oIjn0IsfXRf',
+                  'charset' => 'utf8mb4',
+              ],
+              'setup_token' => 'epsok-prod-setup-7deb-2028',
+              'bootstrap_admin' => [
+                  'username' => 'siteadmin',
+                  'password' => 'SiteAdmin-Epsok-2028!',
+                  'display_name' => 'Администратор сайта',
+              ],
+          ];
+          PHP
+
+      - name: Deploy via FTP
+        env:
+          FTP_PASS: J0y2PZha00cDRw5C
+        run: node demo/deploy-public-ftp.mjs
+
+      - name: Run database setup
+        run: |
+          curl -sS --fail --connect-timeout 30 --max-time 120 \
+            "https://epsok.ru/api/setup.php?token=epsok-prod-setup-7deb-2028" | tee setup-result.json
+          grep -q '"ok":true' setup-result.json
+
+      - name: Verify console endpoint
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 30 \
+            "https://epsok.ru/console/")
+          test "$code" = "401" -o "$code" = "200"

@@ -2,6 +2,12 @@
   Require all denied
 </Files>
 
+# Одноразовая установка БД: доступ по setup_token, без HTTP Basic Auth
+<Files "setup.php">
+  AuthType None
+  Require all granted
+</Files>
+
 <IfModule mod_headers.c>
   Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=!SKIP_API_CACHE
   Header always set X-Content-Type-Options "nosniff"
