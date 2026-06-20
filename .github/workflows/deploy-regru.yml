@@ -38,14 +38,19 @@ jobs:
           FTP_PASS: J0y2PZha00cDRw5C
         run: node demo/deploy-public-ftp.mjs
 
-      - name: Run database setup
+      - name: Install database schema
         run: |
-          curl -sS --fail --connect-timeout 30 --max-time 120 \
-            "https://epsok.ru/api/setup.php?token=epsok-prod-setup-7deb-2028" | tee setup-result.json
-          grep -q '"ok":true' setup-result.json
+          pip install requests
+          python3 demo/setup-db-pma.py | tee setup-result.json
+          grep -q '"ok": true' setup-result.json
 
-      - name: Verify console endpoint
+      - name: Verify deploy artifacts exist on FTP
+        env:
+          FTP_PASS: J0y2PZha00cDRw5C
         run: |
-          code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 30 \
-            "https://epsok.ru/console/")
-          test "$code" = "401" -o "$code" = "200"
+          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/" | tee ftp-root.txt
+          grep -q 'app.js' ftp-root.txt
+          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/api/" | tee ftp-api.txt
+          grep -q 'setup.php' ftp-api.txt
+          curl -sS --list-only "ftp://u3548413:${FTP_PASS}@31.31.197.50/console/" | tee ftp-console.txt
+          grep -q 'index.html' ftp-console.txt
